@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Audit trail{% endblock %}
+
+{% block content %}
+    <h1>Audit trail</h1>
+
+    {% if result %}
+        {% if result.ok %}
+            <p><strong>Chain intact.</strong> All {{ entries|length }} entries verified.</p>
+        {% else %}
+            <p><strong>Chain broken:</strong> {{ result.reason }}</p>
+        {% endif %}
+    {% endif %}
+
+    <p><a href="?verify=1">Verify integrity</a></p>
+
+    <table border="1" cellpadding="4">
+        <thead>
+            <tr>
+                <th>Seq</th>
+                <th>When</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Entity</th>
+                <th>Old</th>
+                <th>New</th>
+                <th>Hash</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in entries %}
+                <tr>
+                    <td>{{ e.seq }}</td>
+                    <td>{{ e.occurred_at|date:"Y-m-d H:i:s" }}</td>
+                    <td>{{ e.actor.username }}</td>
+                    <td>{{ e.action }}</td>
+                    <td>{{ e.entity_type }}:{{ e.entity_id }}</td>
+                    <td>{{ e.old_values }}</td>
+                    <td>{{ e.new_values }}</td>
+                    <td><code>{{ e.entry_hash|slice:":12" }}...</code></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8">No audit entries yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

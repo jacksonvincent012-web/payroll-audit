@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}Payroll Audit{% endblock %}</title>
+</head>
+<body>
+    <header>
+        {% if user.is_authenticated %}
+            Signed in as <strong>{{ user.username }}</strong>
+            <form action="{% url 'logout' %}" method="post" style="display:inline">
+                {% csrf_token %}
+                <button type="submit">Sign out</button>
+            </form>
+        {% endif %}
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
