@@ -136,3 +136,4 @@ AUTH_USER_MODEL = "accounts.User"
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+AUDIT_HMAC_KEY = os.getenv("AUDIT_HMAC_KEY")
