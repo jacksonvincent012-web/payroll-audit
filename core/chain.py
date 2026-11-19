@@ -1,5 +1,4 @@
-@'
-import hashlib
+﻿import hashlib
 import hmac
 import json
 
@@ -51,4 +50,3 @@ def verify(entries, key: bytes, checkpoint=None):
         if last["seq"] == cp_seq and last["entry_hash"] != cp_hash:
             return (False, f"checkpoint mismatch at seq {cp_seq}")
     return (True, None)
-'@ | Set-Content core\chain.py -Encoding UTF8
