@@ -3,46 +3,67 @@
 {% block title %}Audit trail{% endblock %}
 
 {% block content %}
-    <h1>Audit trail</h1>
+<div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+        <p class="text-xs uppercase tracking-[0.2em] text-emerald-400">Audit trail</p>
+        <h1 class="mt-1 text-3xl font-semibold tracking-tight text-white">Entry log</h1>
+        <p class="mt-1 text-sm text-slate-400">{{ entries|length }} entries &middot; append-only &middot; hash-chained</p>
+    </div>
+    <a href="?verify=1" class="rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-emerald-950 transition hover:bg-emerald-400">
+        Verify integrity
+    </a>
+</div>
 
-    {% if result %}
-        {% if result.ok %}
-            <p><strong>Chain intact.</strong> All {{ entries|length }} entries verified.</p>
-        {% else %}
-            <p><strong>Chain broken:</strong> {{ result.reason }}</p>
-        {% endif %}
+{% if result %}
+    {% if result.ok %}
+        <div class="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4">
+            <span class="mt-0.5 text-emerald-400">&#10003;</span>
+            <div>
+                <p class="font-medium text-emerald-300">Chain intact</p>
+                <p class="mt-0.5 text-sm text-emerald-400/80">All {{ entries|length }} entries hash and link correctly.</p>
+            </div>
+        </div>
+    {% else %}
+        <div class="mb-6 flex items-start gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-5 py-4">
+            <span class="mt-0.5 text-rose-400">&#10007;</span>
+            <div>
+                <p class="font-medium text-rose-300">Chain broken</p>
+                <p class="mt-0.5 text-sm text-rose-400/80">{{ result.reason }}</p>
+            </div>
+        </div>
     {% endif %}
+{% endif %}
 
-    <p><a href="?verify=1">Verify integrity</a></p>
-
-    <table border="1" cellpadding="4">
-        <thead>
+<div class="overflow-x-auto rounded-2xl border border-line bg-panel">
+    <table class="w-full text-left text-sm">
+        <thead class="border-b border-line bg-white/5 text-xs uppercase tracking-wider text-slate-400">
             <tr>
-                <th>Seq</th>
-                <th>When</th>
-                <th>Actor</th>
-                <th>Action</th>
-                <th>Entity</th>
-                <th>Old</th>
-                <th>New</th>
-                <th>Hash</th>
+                <th class="px-4 py-3 font-medium">Seq</th>
+                <th class="px-4 py-3 font-medium">When</th>
+                <th class="px-4 py-3 font-medium">Actor</th>
+                <th class="px-4 py-3 font-medium">Action</th>
+                <th class="px-4 py-3 font-medium">Entity</th>
+                <th class="px-4 py-3 font-medium">Change</th>
+                <th class="px-4 py-3 font-medium">Hash</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-line">
             {% for e in entries %}
-                <tr>
-                    <td>{{ e.seq }}</td>
-                    <td>{{ e.occurred_at|date:"Y-m-d H:i:s" }}</td>
-                    <td>{{ e.actor.username }}</td>
-                    <td>{{ e.action }}</td>
-                    <td>{{ e.entity_type }}:{{ e.entity_id }}</td>
-                    <td>{{ e.old_values }}</td>
-                    <td>{{ e.new_values }}</td>
-                    <td><code>{{ e.entry_hash|slice:":12" }}...</code></td>
+                <tr class="transition hover:bg-white/5">
+                    <td class="px-4 py-3 font-mono text-slate-500">{{ e.seq }}</td>
+                    <td class="whitespace-nowrap px-4 py-3 text-slate-400">{{ e.occurred_at|date:"Y-m-d H:i" }}</td>
+                    <td class="px-4 py-3 text-slate-300">{{ e.actor.username }}</td>
+                    <td class="px-4 py-3">
+                        <span class="rounded-full px-2.5 py-1 text-xs font-medium {% if e.action == 'CREATE' %}bg-emerald-500/10 text-emerald-300{% elif e.action == 'DELETE' %}bg-rose-500/10 text-rose-300{% else %}bg-amber-500/10 text-amber-300{% endif %}">{{ e.action }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-slate-300">{{ e.entity_type }}<span class="text-slate-600">:</span><span class="font-mono text-slate-400">{{ e.entity_id }}</span></td>
+                    <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ e.old_values }} &rarr; {{ e.new_values }}</td>
+                    <td class="px-4 py-3"><code class="rounded bg-ink px-2 py-1 font-mono text-xs text-slate-400" title="{{ e.entry_hash }}">{{ e.entry_hash|slice:":10" }}&hellip;</code></td>
                 </tr>
             {% empty %}
-                <tr><td colspan="8">No audit entries yet.</td></tr>
+                <tr><td colspan="7" class="px-4 py-12 text-center text-slate-500">No audit entries yet.</td></tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
 {% endblock %}

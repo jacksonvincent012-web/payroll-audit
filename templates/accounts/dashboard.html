@@ -3,15 +3,80 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-    <h1>Dashboard</h1>
-    <p>{{ user.username }}</p>
+<div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+        <p class="text-xs uppercase tracking-[0.2em] text-emerald-400">Dashboard</p>
+        <h1 class="mt-1 text-3xl font-semibold tracking-tight text-white">{{ user.username }}</h1>
+        <p class="mt-1 text-sm text-slate-400">{{ user.email|default:"no email on file" }}</p>
+    </div>
+    <a href="/audit/?verify=1" class="rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-emerald-950 transition hover:bg-emerald-400">
+        Verify audit integrity
+    </a>
+</div>
 
-    <h2>Roles</h2>
-    <ul>
-        {% for role in user.roles.all %}
-            <li>{{ role.name }}</li>
-        {% empty %}
-            <li>No roles assigned</li>
-        {% endfor %}
-    </ul>
+<div class="grid gap-4 sm:grid-cols-3">
+    <div class="rounded-2xl border border-line bg-panel p-5">
+        <p class="text-xs uppercase tracking-wider text-slate-500">Audit entries</p>
+        <p class="mt-2 text-3xl font-semibold text-white">{{ audit_count }}</p>
+        <p class="mt-1 text-xs text-slate-500">append-only</p>
+    </div>
+
+    <div class="rounded-2xl border border-line bg-panel p-5">
+        <p class="text-xs uppercase tracking-wider text-slate-500">System users</p>
+        <p class="mt-2 text-3xl font-semibold text-white">{{ user_count }}</p>
+        <p class="mt-1 text-xs text-slate-500">six role types</p>
+    </div>
+
+    <div class="rounded-2xl border p-5 {% if chain_ok %}border-emerald-500/30 bg-emerald-500/5{% else %}border-rose-500/30 bg-rose-500/5{% endif %}">
+        <p class="text-xs uppercase tracking-wider text-slate-500">Chain status</p>
+        <p class="mt-2 text-xl font-semibold {% if chain_ok %}text-emerald-300{% else %}text-rose-300{% endif %}">
+            {% if chain_ok %}Intact{% else %}Broken{% endif %}
+        </p>
+        <p class="mt-1 text-xs text-slate-500">{% if chain_ok %}verified just now{% else %}{{ chain_reason }}{% endif %}</p>
+    </div>
+</div>
+
+<div class="mt-6 grid gap-6 lg:grid-cols-3">
+    <div class="rounded-2xl border border-line bg-panel p-6 lg:col-span-2">
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-sm font-medium uppercase tracking-wider text-slate-400">Recent activity</h2>
+            <a href="/audit/" class="text-xs text-emerald-400 hover:text-emerald-300">View all</a>
+        </div>
+
+        <div class="space-y-3">
+            {% for e in recent %}
+                <div class="flex items-center gap-4 rounded-lg border border-line bg-ink px-4 py-3">
+                    <span class="rounded-full px-2.5 py-1 text-xs font-medium {% if e.action == 'CREATE' %}bg-emerald-500/10 text-emerald-300{% elif e.action == 'DELETE' %}bg-rose-500/10 text-rose-300{% else %}bg-amber-500/10 text-amber-300{% endif %}">{{ e.action }}</span>
+                    <span class="text-sm text-slate-300">{{ e.entity_type }}:{{ e.entity_id }}</span>
+                    <span class="ml-auto font-mono text-xs text-slate-500">#{{ e.seq }}</span>
+                </div>
+            {% empty %}
+                <p class="text-sm text-slate-500">No activity recorded yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-line bg-panel p-6">
+        <h2 class="text-sm font-medium uppercase tracking-wider text-slate-400">Roles</h2>
+        <div class="mt-4 flex flex-wrap gap-2">
+            {% if user.is_superuser %}
+                <span class="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs text-amber-300">Superuser</span>
+            {% endif %}
+            {% for role in user.roles.all %}
+                <span class="rounded-full border border-line bg-ink px-3 py-1 text-xs text-slate-300">{{ role.name }}</span>
+            {% empty %}
+                {% if not user.is_superuser %}
+                    <p class="text-sm text-slate-500">No roles assigned.</p>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <h2 class="mt-8 text-sm font-medium uppercase tracking-wider text-slate-400">Assurance</h2>
+        <ul class="mt-4 space-y-2 text-sm text-slate-400">
+            <li class="flex gap-2"><span class="text-emerald-400">&bull;</span> HMAC-SHA256 chain</li>
+            <li class="flex gap-2"><span class="text-emerald-400">&bull;</span> Append-only at database level</li>
+            <li class="flex gap-2"><span class="text-emerald-400">&bull;</span> Separation of duty enforced</li>
+        </ul>
+    </div>
+</div>
 {% endblock %}
