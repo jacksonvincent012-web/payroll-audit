@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Employees{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+        <p class="text-xs uppercase tracking-[0.2em] text-emerald-400">Employees</p>
+        <h1 class="mt-1 text-3xl font-semibold tracking-tight text-white">Staff register</h1>
+        <p class="mt-1 text-sm text-slate-400">
+            {{ employees|length }} records &middot; every change is written to the audit chain
+        </p>
+    </div>
+
+    {% if can_edit %}
+        <a href="{% url 'employees:employee_create' %}"
+           class="rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-emerald-950 transition hover:bg-emerald-400">
+            Add employee
+        </a>
+    {% endif %}
+</div>
+
+<div class="overflow-x-auto rounded-2xl border border-line bg-panel">
+    <table class="w-full text-left text-sm">
+        <thead class="border-b border-line bg-white/5 text-xs uppercase tracking-wider text-slate-400">
+            <tr>
+                <th class="px-4 py-3 font-medium">Staff no</th>
+                <th class="px-4 py-3 font-medium">Name</th>
+                <th class="px-4 py-3 font-medium">Department</th>
+                <th class="px-4 py-3 font-medium">Job title</th>
+                <th class="px-4 py-3 text-right font-medium">Gross salary</th>
+                <th class="px-4 py-3 font-medium">Status</th>
+                <th class="px-4 py-3"></th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-line">
+            {% for employee in employees %}
+                <tr class="transition hover:bg-white/5">
+                    <td class="px-4 py-3 font-mono text-slate-400">{{ employee.staff_no }}</td>
+                    <td class="px-4 py-3 text-slate-200">{{ employee.full_name }}</td>
+                    <td class="px-4 py-3 text-slate-400">{{ employee.department }}</td>
+                    <td class="px-4 py-3 text-slate-400">{{ employee.job_title }}</td>
+                    <td class="px-4 py-3 text-right font-mono text-slate-200">{{ employee.gross_salary }}</td>
+                    <td class="px-4 py-3">
+                        {% if employee.is_active %}
+                            <span class="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300">Active</span>
+                        {% else %}
+                            <span class="rounded-full bg-slate-500/10 px-2.5 py-1 text-xs font-medium text-slate-400">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        {% if can_edit %}
+                            <a href="{% url 'employees:employee_edit' employee.pk %}"
+                               class="text-xs text-emerald-400 hover:text-emerald-300">Edit</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7" class="px-4 py-12 text-center text-slate-500">No employees yet.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

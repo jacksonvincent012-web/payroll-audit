@@ -32,6 +32,9 @@
             <a href="/" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if request.path == '/' %}bg-emerald-500/10 text-emerald-300{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
                 <span class="h-1.5 w-1.5 rounded-full bg-current"></span> Dashboard
             </a>
+            <a href="/employees/" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if '/employees' in request.path %}bg-emerald-500/10 text-emerald-300{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
+                <span class="h-1.5 w-1.5 rounded-full bg-current"></span> Employees
+            </a>
             <a href="/audit/" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if '/audit' in request.path %}bg-emerald-500/10 text-emerald-300{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
                 <span class="h-1.5 w-1.5 rounded-full bg-current"></span> Audit trail
             </a>
