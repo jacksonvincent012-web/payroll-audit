@@ -23,7 +23,8 @@
                 <div class="updated-dd-menu">
                     <a href="/employees/">All employees</a>
                     <a href="/employees/new-employees/">New employees</a>
-                    <a href="/employees/new/">Add employee</a>
+                    {% if 'HR_OFFICER' in user.roles.all %}<a href="/employees/new/">Add employee</a>{% endif %}
+                    {% if 'APPROVER' in user.roles.all %}<a href="/employees/new-employees/">Approve employees</a>{% endif %}
                 </div>
             </details>
 
