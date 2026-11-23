@@ -5,13 +5,15 @@ from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
+from django.utils import timezone
+from datetime import timedelta
 
 from accounts.decorators import role_required
 from employees.forms import EmployeeForm
 from employees.models import Employee
 from employees.services import create_employee, update_employee
 
-VIEW_ROLES = ("HR_OFFICER", "ADMIN", "ACCOUNTANT", "AUDITOR")
+VIEW_ROLES = ("HR_OFFICER", "ADMIN", "ACCOUNTANT", "AUDITOR", "APPROVER")
 EDIT_ROLES = ("HR_OFFICER",)
 
 
@@ -24,6 +26,18 @@ def employee_list(request):
         request,
         "employees/employee_list.html",
         {"employees": Employee.objects.all(), "can_edit": can_edit},
+    )
+
+
+@login_required
+@role_required(*VIEW_ROLES)
+def employee_new_list(request):
+    since = timezone.now() - timedelta(days=30)
+    employees = Employee.objects.filter(created_at__gte=since).order_by("-created_at")
+    return render(
+        request,
+        "employees/employee_list.html",
+        {"employees": employees, "can_edit": False, "new_only": True},
     )
 
 

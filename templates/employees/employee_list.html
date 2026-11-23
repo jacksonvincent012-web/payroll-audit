@@ -5,8 +5,8 @@
 {% block content %}
 <section class="updated-surface">
     <p class="updated-eyebrow">Employees</p>
-    <h1 class="updated-title">Staff register</h1>
-    <p class="updated-lead">{{ employees|length }} records &middot; every change is written to the audit chain</p>
+    <h1 class="updated-title">{% if new_only %}New employees{% else %}Staff register{% endif %}</h1>
+    <p class="updated-lead">{% if new_only %}Newly added staff &middot; {% endif %}{{ employees|length }} records &middot; every change is written to the audit chain</p>
     {% if can_edit %}
         <div style="margin-top:12px;">
             <a class="updated-btn updated-btn--primary" href="{% url 'employees:employee_create' %}">Add employee</a>
