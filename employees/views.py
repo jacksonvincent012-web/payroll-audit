@@ -2,7 +2,7 @@ from django.core.exceptions import PermissionDenied
 import json
 
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -82,3 +82,17 @@ def employee_autosave(request):
     )
 
     return JsonResponse({"ok": True, "status": "saved"})
+
+
+@login_required
+def employee_video(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    if not employee.video:
+        raise Http404("no verification video")
+    if not (
+        request.user.is_superuser
+        or request.user.has_role("HR_OFFICER")
+        or request.user.has_role("APPROVER")
+    ):
+        raise PermissionDenied
+    return FileResponse(employee.video, as_attachment=True, filename=employee.video.name)

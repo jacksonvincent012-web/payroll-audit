@@ -41,12 +41,21 @@ def _notify_verification(actor, employee, action):
     for u in approvers:
         if not u.email:
             continue
+        attachments = []
+        if employee.video:
+            try:
+                video_file = employee.video.open("rb")
+                attachments.append((employee.video.name, video_file.read(), "video/mp4"))
+                video_file.close()
+            except Exception:
+                pass
         send_mail(
             subject="Payroll Audit - Verification video " + action + ": " + str(employee.staff_no),
             message=details,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[u.email],
             fail_silently=True,
+            attachments=attachments,
         )
 
 
