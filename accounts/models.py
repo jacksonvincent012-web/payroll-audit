@@ -41,6 +41,14 @@ class User(AbstractUser):
     def has_role(self, code):
         return self.roles.filter(code=code).exists()
 
+    @property
+    def is_hr_officer(self):
+        return self.has_role("HR_OFFICER")
+
+    @property
+    def is_approver(self):
+        return self.has_role("APPROVER")
+
 
 class UserRole(models.Model):
     CONFLICTS: ClassVar[dict[str, set[str]]] = {
