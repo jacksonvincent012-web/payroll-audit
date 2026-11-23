@@ -31,7 +31,7 @@ def employee_list(request):
 def employee_create(request):
     if not request.user.has_role("HR_OFFICER"):
         raise PermissionDenied
-    form = EmployeeForm(request.POST or None)
+    form = EmployeeForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         create_employee(request.user, **form.cleaned_data)
         return redirect("employees:employee_list")

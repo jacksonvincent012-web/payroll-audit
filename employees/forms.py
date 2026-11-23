@@ -17,6 +17,7 @@ class EmployeeForm(forms.ModelForm):
             "job_title",
             "gross_salary",
             "is_active",
+            "video",
         ]
         widgets = {"gross_salary": forms.NumberInput(attrs={"step": "0.01"})}
 

@@ -141,6 +141,11 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 
+# Media files (employee verification videos)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+
 # Custom user model
 AUTH_USER_MODEL = "accounts.User"
 
@@ -149,6 +154,7 @@ AUTH_USER_MODEL = "accounts.User"
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "payroll-audit@payrollaudit.org"
 AUDIT_HMAC_KEY = os.getenv("AUDIT_HMAC_KEY")
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"

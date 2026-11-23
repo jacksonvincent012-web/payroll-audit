@@ -18,6 +18,7 @@ class Employee(models.Model):
     )
     is_active = models.BooleanField(default=True)
     is_draft = models.BooleanField(default=False)
+    video = models.FileField(upload_to="videos/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -47,4 +48,5 @@ class Employee(models.Model):
             "gross_salary": str(self.gross_salary),
             "is_active": self.is_active,
             "is_draft": self.is_draft,
+            "video": self.video.name if self.video else "",
         }
