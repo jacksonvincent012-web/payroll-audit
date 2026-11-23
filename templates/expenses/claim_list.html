@@ -26,6 +26,7 @@
                     <th>Category</th>
                     <th style="text-align:right;">Amount</th>
                     <th>Status</th>
+                    <th>Decision</th>
                     <th>Decided by</th>
                     <th>Submitted</th>
                     <th>Progress</th>
@@ -44,12 +45,23 @@
                             {% elif c.status == 'SUBMITTED' %}<span style="color:#d97706;font-weight:600;">Submitted</span>
                             {% else %}{{ c.status }}{% endif %}
                         </td>
+                        <td>
+                            {% if c.status == 'SUBMITTED' %}
+                            <form method="post" action="{% url 'expenses:decide_claim' c.pk %}" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="APPROVE">
+                                <button type="submit" class="updated-btn updated-btn--primary" style="padding:4px 10px;font-size:0.75rem;">Approve</button>
+                                <input type="hidden" name="action" value="REJECT">
+                                <button type="submit" class="updated-btn updated-btn--ghost" style="padding:4px 10px;font-size:0.75rem;">Reject</button>
+                            </form>
+                            {% endif %}
+                        </td>
                         <td>{% if c.decided_by %}{{ c.decided_by.username }}{% else %}—{% endif %}</td>
                         <td style="white-space:nowrap;">{% if c.submitted_at %}{{ c.submitted_at|date:"Y-m-d H:i" }}{% else %}—{% endif %}</td>
                         <td>{% include "expenses/_stepper.html" with claim=c %}</td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="8">No claims found.</td></tr>
+                    <tr><td colspan="9">No claims found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

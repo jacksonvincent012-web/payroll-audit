@@ -80,7 +80,18 @@
                         <td>{{ c.get_category_display }}</td>
                         <td style="text-align:right;font-family:monospace;">{{ c.amount }}</td>
                         <td style="white-space:nowrap;">{{ c.submitted_at|date:"Y-m-d H:i" }}</td>
-                        <td>{% include "expenses/_stepper.html" with claim=c %}</td>
+                        <td>
+                            {% include "expenses/_stepper.html" with claim=c %}
+                            {% if c.status == 'SUBMITTED' %}
+                            <form method="post" action="{% url 'expenses:decide_claim' c.pk %}" style="margin-top:8px;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="APPROVE">
+                                <button type="submit" class="updated-btn updated-btn--primary" style="padding:4px 10px;font-size:0.75rem;">Approve</button>
+                                <input type="hidden" name="action" value="REJECT">
+                                <button type="submit" class="updated-btn updated-btn--ghost" style="padding:4px 10px;font-size:0.75rem;">Reject</button>
+                            </form>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% empty %}
                     <tr><td colspan="6">Nothing waiting — you're caught up.</td></tr>

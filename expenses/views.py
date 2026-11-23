@@ -2,10 +2,12 @@ from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Sum
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from accounts.decorators import role_required
 from expenses.models import Account, ExpenseClaim, LedgerEntry
+from expenses.services import ClaimError, approve_claim, reject_claim
 
 VIEW_ROLES = ("ADMIN", "AUDITOR", "ACCOUNTANT")
 
@@ -74,8 +76,28 @@ def claim_list(request):
             "claims": claims,
             "status": status,
             "statuses": ExpenseClaim.STATUS_CHOICES,
+            "can_decide": request.user.is_superuser or request.user.has_role("APPROVER"),
         },
     )
+
+
+@login_required
+@role_required(*VIEW_ROLES, "APPROVER")
+def decide_claim(request, pk):
+    claim = get_object_or_404(ExpenseClaim, pk=pk)
+    action = (request.POST.get("action") or "").strip().upper()
+    note = (request.POST.get("note") or "").strip()
+    actor = request.user
+    try:
+        if action == "APPROVE":
+            approve_claim(actor, claim, note=note)
+        elif action == "REJECT":
+            reject_claim(actor, claim, note=note)
+        else:
+            return redirect("expenses:claim_list")
+    except ClaimError:
+        return redirect("expenses:claim_list")
+    return redirect("expenses:claim_list")
 
 
 @login_required
