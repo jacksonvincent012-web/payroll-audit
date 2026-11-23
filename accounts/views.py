@@ -5,6 +5,7 @@ from django.shortcuts import render
 
 from auditlog.models import AuditEntry
 from core.chain import verify
+from expenses.models import ExpenseClaim
 
 
 def _serialise(e):
@@ -30,11 +31,19 @@ def dashboard(request):
         settings.AUDIT_HMAC_KEY.encode(),
     )
 
+    pending = ExpenseClaim.objects.filter(status=ExpenseClaim.SUBMITTED)
+
     context = {
         "audit_count": len(entries),
         "user_count": get_user_model().objects.count(),
         "chain_ok": ok,
         "chain_reason": reason,
         "recent": entries[-5:][::-1],
+        "recent_decisions": ExpenseClaim.objects.exclude(decided_by=None)
+        .select_related("decided_by", "claimant")
+        .order_by("-decided_at")[:5],
+        "pending_claims": pending.select_related("claimant").order_by("-submitted_at"),
+        "can_decide": request.user.is_superuser
+        or request.user.roles.filter(code="APPROVER").exists(),
     }
     return render(request, "accounts/dashboard.html", context)

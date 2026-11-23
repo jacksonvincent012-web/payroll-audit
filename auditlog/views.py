@@ -1,6 +1,6 @@
 ﻿from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 
 from accounts.decorators import role_required
 from auditlog.models import AuditEntry
@@ -37,4 +37,25 @@ def entry_list(request):
 
     return render(
         request, "auditlog/entry_list.html", {"entries": entries, "result": result}
+    )
+
+
+@login_required
+@role_required("AUDITOR", "ADMIN")
+def entry_detail(request, pk):
+    entry = get_object_or_404(AuditEntry, pk=pk)
+
+    qr_payload = (
+        f"Payroll Audit Entry #{entry.seq}\n"
+        f"When: {entry.occurred_at:%Y-%m-%d %H:%M:%S}\n"
+        f"Actor: {entry.actor.username}\n"
+        f"Action: {entry.action}\n"
+        f"Entity: {entry.entity_type}:{entry.entity_id}\n"
+        f"Hash: {entry.entry_hash}"
+    )
+
+    return render(
+        request,
+        "auditlog/entry_detail.html",
+        {"entry": entry, "qr_payload": qr_payload},
     )

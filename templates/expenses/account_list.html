@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Chart of accounts{% endblock %}
+
+{% block content %}
+<section class="mku-surface">
+    <p class="mku-eyebrow">Finance</p>
+    <h1 class="mku-title">Chart of accounts</h1>
+    <p class="mku-lead">Account codes used when a claim is posted to the ledger.</p>
+    <div style="margin-top:12px;">
+        <a class="mku-btn mku-btn--ghost" href="{% url 'expenses:ledger_summary' %}">Ledger summary</a>
+    </div>
+</section>
+
+<section class="mku-surface">
+    <div class="mku-table-wrap">
+        <table class="mku-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Kind</th>
+                    <th style="text-align:right;">Lines</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                    <tr>
+                        <td style="font-family:monospace;">{{ account.code }}</td>
+                        <td>{{ account.name }}</td>
+                        <td>{{ account.kind }}</td>
+                        <td style="text-align:right;font-family:monospace;">{{ account.lines.count }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4">No accounts yet. Seed the chart of accounts first.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

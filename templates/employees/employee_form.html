@@ -3,47 +3,100 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="mb-8">
-    <p class="text-xs uppercase tracking-[0.2em] text-emerald-400">Employees</p>
-    <h1 class="mt-1 text-3xl font-semibold tracking-tight text-white">{{ title }}</h1>
-    <p class="mt-1 text-sm text-slate-400">Saving writes an audit entry in the same transaction.</p>
-</div>
+<section class="mku-surface">
+    <p class="mku-eyebrow">Employees</p>
+    <h1 class="mku-title">{{ title }}</h1>
+    <p class="mku-lead">Every change is recorded to the audit chain in real time. No ghost workers.</p>
+</section>
 
-<div class="max-w-2xl rounded-2xl border border-line bg-panel p-6">
+<section class="mku-surface" style="max-width:720px;">
     {% if form.non_field_errors %}
-        <div class="mb-5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
-            {{ form.non_field_errors }}
-        </div>
+        <p class="mku-alert">{{ form.non_field_errors }}</p>
     {% endif %}
 
-    <form method="post" class="space-y-4">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:8px 12px;background:#f1f5fa;border-radius:8px;border:1px solid #e3e8ef;">
+        <span id="record-status" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#cbd5e1;transition:background .2s;"></span>
+        <span id="record-label" style="font-size:0.82rem;color:var(--mku-muted);font-weight:600;">Ready</span>
+        <span style="margin-left:auto;font-size:0.75rem;color:var(--mku-muted);">Live capture active</span>
+    </div>
+
+    <form method="post" id="employee-form" style="display:grid;gap:14px;">
         {% csrf_token %}
 
         {% for field in form %}
-            <div>
-                <label for="{{ field.id_for_label }}" class="mb-1.5 block text-sm font-medium text-slate-300">
-                    {{ field.label }}
-                </label>
+            <div class="mku-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
                 {% if field.help_text %}
-                    <p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>
+                    <p style="font-size:0.8rem;color:var(--mku-muted);">{{ field.help_text }}</p>
                 {% endif %}
                 {% for error in field.errors %}
-                    <p class="mt-1 text-xs text-rose-300">{{ error }}</p>
+                    <p style="font-size:0.8rem;color:#dc2626;">{{ error }}</p>
                 {% endfor %}
             </div>
         {% endfor %}
 
-        <div class="flex items-center gap-3 pt-2">
-            <button type="submit"
-                    class="rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-emerald-950 transition hover:bg-emerald-400">
-                Save
-            </button>
-            <a href="{% url 'employees:employee_list' %}"
-               class="rounded-lg border border-line px-4 py-2.5 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white">
-                Cancel
-            </a>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button type="submit" class="mku-btn mku-btn--primary">Save</button>
+            <a class="mku-btn mku-btn--ghost" href="{% url 'employees:employee_list' %}">Cancel</a>
         </div>
     </form>
-</div>
+</section>
+
+<script>
+(function () {
+    var dot = document.getElementById("record-status");
+    var label = document.getElementById("record-label");
+    var form = document.getElementById("employee-form");
+    var timer = null;
+    var csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
+
+    function setStatus(state) {
+        if (state === "recording") {
+            dot.style.background = "#d97706";
+            label.textContent = "Recording\u2026";
+            label.style.color = "#d97706";
+        } else if (state === "saving") {
+            dot.style.background = "#2563eb";
+            label.textContent = "Saving to server\u2026";
+            label.style.color = "#2563eb";
+        } else if (state === "saved") {
+            dot.style.background = "#16a34a";
+            label.textContent = "Saved to audit trail";
+            label.style.color = "#16a34a";
+        } else {
+            dot.style.background = "#cbd5e1";
+            label.textContent = "Ready";
+            label.style.color = "var(--mku-muted)";
+        }
+    }
+
+    function autosave() {
+        setStatus("saving");
+        var data = new FormData(form);
+        fetch("{% url 'employees:employee_autosave' %}", {
+            method: "POST",
+            body: data,
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (json) {
+            if (json.ok) { setStatus("saved"); }
+            else { setStatus("ready"); }
+        })
+        .catch(function () { setStatus("ready"); });
+    }
+
+    form.addEventListener("input", function () {
+        setStatus("recording");
+        clearTimeout(timer);
+        timer = setTimeout(autosave, 2000);
+    });
+    form.addEventListener("change", function () {
+        setStatus("recording");
+        clearTimeout(timer);
+        timer = setTimeout(autosave, 2000);
+    });
+})();
+</script>
 {% endblock %}

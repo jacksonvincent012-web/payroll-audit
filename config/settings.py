@@ -30,10 +30,18 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = []
 
+JAZZMIN_SETTINGS = {"theme": "darkly"}
+
 
 # Application definition
 
+JAZZMIN_UI_TWEAKS = {
+    "theme": "darkly",
+    "default_theme_mode": "dark",
+}
+
 INSTALLED_APPS = [
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -55,6 +63,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+if DEBUG:
+    # DEV-ONLY: auto-login as superuser. Never runs in production.
+    MIDDLEWARE.append("accounts.middleware.DevAutoLoginMiddleware")
 
 ROOT_URLCONF = "config.urls"
 
@@ -126,6 +138,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 
 # Custom user model

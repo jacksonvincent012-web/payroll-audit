@@ -2,10 +2,7 @@ from django import forms
 
 from employees.models import Employee
 
-INPUT = (
-    "w-full rounded-lg border border-line bg-ink px-3 py-2.5 "
-    "text-slate-100 outline-none focus:border-emerald-500/60"
-)
+INPUT = "mku-input"
 
 
 class EmployeeForm(forms.ModelForm):

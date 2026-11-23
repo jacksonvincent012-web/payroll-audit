@@ -3,80 +3,152 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="mb-8 flex flex-wrap items-end justify-between gap-4">
-    <div>
-        <p class="text-xs uppercase tracking-[0.2em] text-emerald-400">Dashboard</p>
-        <h1 class="mt-1 text-3xl font-semibold tracking-tight text-white">{{ user.username }}</h1>
-        <p class="mt-1 text-sm text-slate-400">{{ user.email|default:"no email on file" }}</p>
-    </div>
-    <a href="/audit/?verify=1" class="rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-emerald-950 transition hover:bg-emerald-400">
-        Verify audit integrity
-    </a>
-</div>
+<section class="mku-surface">
+    <p class="mku-eyebrow">Dashboard</p>
+    <h1 class="mku-title">{{ user.username }}</h1>
+    <p class="mku-lead">{{ user.email|default:"no email on file" }}</p>
 
-<div class="grid gap-4 sm:grid-cols-3">
-    <div class="rounded-2xl border border-line bg-panel p-5">
-        <p class="text-xs uppercase tracking-wider text-slate-500">Audit entries</p>
-        <p class="mt-2 text-3xl font-semibold text-white">{{ audit_count }}</p>
-        <p class="mt-1 text-xs text-slate-500">append-only</p>
-    </div>
-
-    <div class="rounded-2xl border border-line bg-panel p-5">
-        <p class="text-xs uppercase tracking-wider text-slate-500">System users</p>
-        <p class="mt-2 text-3xl font-semibold text-white">{{ user_count }}</p>
-        <p class="mt-1 text-xs text-slate-500">six role types</p>
-    </div>
-
-    <div class="rounded-2xl border p-5 {% if chain_ok %}border-emerald-500/30 bg-emerald-500/5{% else %}border-rose-500/30 bg-rose-500/5{% endif %}">
-        <p class="text-xs uppercase tracking-wider text-slate-500">Chain status</p>
-        <p class="mt-2 text-xl font-semibold {% if chain_ok %}text-emerald-300{% else %}text-rose-300{% endif %}">
-            {% if chain_ok %}Intact{% else %}Broken{% endif %}
-        </p>
-        <p class="mt-1 text-xs text-slate-500">{% if chain_ok %}verified just now{% else %}{{ chain_reason }}{% endif %}</p>
-    </div>
-</div>
-
-<div class="mt-6 grid gap-6 lg:grid-cols-3">
-    <div class="rounded-2xl border border-line bg-panel p-6 lg:col-span-2">
-        <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-sm font-medium uppercase tracking-wider text-slate-400">Recent activity</h2>
-            <a href="/audit/" class="text-xs text-emerald-400 hover:text-emerald-300">View all</a>
+    <div class="mku-stats">
+        <div class="mku-stat">
+            <strong>{{ audit_count }}</strong>
+            <span>Audit entries</span>
         </div>
-
-        <div class="space-y-3">
-            {% for e in recent %}
-                <div class="flex items-center gap-4 rounded-lg border border-line bg-ink px-4 py-3">
-                    <span class="rounded-full px-2.5 py-1 text-xs font-medium {% if e.action == 'CREATE' %}bg-emerald-500/10 text-emerald-300{% elif e.action == 'DELETE' %}bg-rose-500/10 text-rose-300{% else %}bg-amber-500/10 text-amber-300{% endif %}">{{ e.action }}</span>
-                    <span class="text-sm text-slate-300">{{ e.entity_type }}:{{ e.entity_id }}</span>
-                    <span class="ml-auto font-mono text-xs text-slate-500">#{{ e.seq }}</span>
-                </div>
-            {% empty %}
-                <p class="text-sm text-slate-500">No activity recorded yet.</p>
-            {% endfor %}
+        <div class="mku-stat">
+            <strong>{{ user_count }}</strong>
+            <span>System users</span>
+        </div>
+        <div class="mku-stat">
+            <strong>{% if chain_ok %}Intact{% else %}Broken{% endif %}</strong>
+            <span>Chain status</span>
         </div>
     </div>
 
-    <div class="rounded-2xl border border-line bg-panel p-6">
-        <h2 class="text-sm font-medium uppercase tracking-wider text-slate-400">Roles</h2>
-        <div class="mt-4 flex flex-wrap gap-2">
-            {% if user.is_superuser %}
-                <span class="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs text-amber-300">Superuser</span>
+    {% if can_audit %}
+    <div style="margin-top:18px;">
+        <a class="mku-btn mku-btn--primary" href="/audit/?verify=1">Verify audit integrity</a>
+    </div>
+    {% endif %}
+</section>
+
+<section class="mku-surface">
+    <p class="mku-eyebrow">Recent activity</p>
+    <div class="mku-table-wrap">
+        <table class="mku-table">
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>Entity</th>
+                    <th>Seq</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in recent %}
+                    <tr>
+                        <td><span style="font-weight:600;{% if e.action == 'CREATE' %}color:#16a34a;{% elif e.action == 'DELETE' %}color:#dc2626;{% else %}color:#d97706;{% endif %}">{{ e.action }}</span></td>
+                        <td>{{ e.entity_type }}:{{ e.entity_id }}</td>
+                        <td>#{{ e.seq }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="3">No activity recorded yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{% if can_decide %}
+<section class="mku-surface">
+    <p class="mku-eyebrow">Pending my decision</p>
+    <p class="mku-lead">Submitted claims waiting for an approver.</p>
+    <div class="mku-table-wrap">
+        <table class="mku-table">
+            <thead>
+                <tr>
+                    <th>Claim</th>
+                    <th>Claimant</th>
+                    <th>Category</th>
+                    <th style="text-align:right;">Amount</th>
+                    <th>Submitted</th>
+                    <th>Progress</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in pending_claims %}
+                    <tr>
+                        <td style="font-family:monospace;">{{ c.reference }}</td>
+                        <td>{{ c.claimant.username }}</td>
+                        <td>{{ c.get_category_display }}</td>
+                        <td style="text-align:right;font-family:monospace;">{{ c.amount }}</td>
+                        <td style="white-space:nowrap;">{{ c.submitted_at|date:"Y-m-d H:i" }}</td>
+                        <td>{% include "expenses/_stepper.html" with claim=c %}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6">Nothing waiting — you're caught up.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+<section class="mku-surface">
+    <p class="mku-eyebrow">Recent claim decisions</p>
+    <p class="mku-lead">Who decided what, and when — so two approvers never work the same claim blind.</p>
+    <div class="mku-table-wrap">
+        <table class="mku-table">
+            <thead>
+                <tr>
+                    <th>Claim</th>
+                    <th>Claimant</th>
+                    <th>Decision</th>
+                    <th>By</th>
+                    <th>When</th>
+                    <th>Progress</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in recent_decisions %}
+                    <tr>
+                        <td style="font-family:monospace;">{{ c.reference }}</td>
+                        <td>{{ c.claimant.username }}</td>
+                        <td>
+                            {% if c.status == 'APPROVED' %}<span style="color:#16a34a;font-weight:600;">Approved</span>
+                            {% elif c.status == 'REJECTED' %}<span style="color:#dc2626;font-weight:600;">Rejected</span>
+                            {% else %}{{ c.status }}{% endif %}
+                        </td>
+                        <td>{{ c.decided_by.username }}</td>
+                        <td style="white-space:nowrap;">{{ c.decided_at|date:"Y-m-d H:i" }}</td>
+                        <td>{% include "expenses/_stepper.html" with claim=c %}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6">No claims decided yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="mku-surface">
+    <p class="mku-eyebrow">Roles &amp; assurance</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+        {% if user.is_superuser %}
+            <span class="mku-btn mku-btn--outline" style="padding:6px 14px;font-size:0.8rem;">Superuser</span>
+        {% endif %}
+        {% for role in user.roles.all %}
+            <span class="mku-btn mku-btn--ghost" style="padding:6px 14px;font-size:0.8rem;">{{ role.name }}</span>
+        {% empty %}
+            {% if not user.is_superuser %}
+                <span class="mku-lead" style="margin:0;">No roles assigned.</span>
             {% endif %}
-            {% for role in user.roles.all %}
-                <span class="rounded-full border border-line bg-ink px-3 py-1 text-xs text-slate-300">{{ role.name }}</span>
-            {% empty %}
-                {% if not user.is_superuser %}
-                    <p class="text-sm text-slate-500">No roles assigned.</p>
-                {% endif %}
-            {% endfor %}
-        </div>
-
-        <h2 class="mt-8 text-sm font-medium uppercase tracking-wider text-slate-400">Assurance</h2>
-        <ul class="mt-4 space-y-2 text-sm text-slate-400">
-            <li class="flex gap-2"><span class="text-emerald-400">&bull;</span> HMAC-SHA256 chain</li>
-            <li class="flex gap-2"><span class="text-emerald-400">&bull;</span> Append-only at database level</li>
-            <li class="flex gap-2"><span class="text-emerald-400">&bull;</span> Separation of duty enforced</li>
-        </ul>
+        {% endfor %}
     </div>
-</div>
+    <ul style="margin:0;padding-left:18px;color:var(--mku-muted);font-size:0.9rem;line-height:1.8;">
+        <li>HMAC-SHA256 chain</li>
+        <li>Append-only at database level</li>
+        <li>Separation of duty enforced</li>
+    </ul>
+    {% if not chain_ok %}
+        <p class="mku-alert" style="margin-top:14px;">{{ chain_reason }}</p>
+    {% endif %}
+</section>
 {% endblock %}

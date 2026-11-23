@@ -17,6 +17,7 @@ class Employee(models.Model):
         validators=[MinValueValidator(Decimal("0.01"))],
     )
     is_active = models.BooleanField(default=True)
+    is_draft = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -45,4 +46,5 @@ class Employee(models.Model):
             "job_title": self.job_title,
             "gross_salary": str(self.gross_salary),
             "is_active": self.is_active,
+            "is_draft": self.is_draft,
         }

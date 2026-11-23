@@ -1,0 +1,16 @@
+{% comment %} Claim lifecycle stepper. Expects `claim` in context. {% endcomment %}
+{% with s=claim.status %}
+<ul class="stepper">
+    <li class="stepper-step {% if s == 'DRAFT' %}active{% elif s in 'SUBMITTED,APPROVED,REJECTED' %}done{% endif %}">
+        <span class="stepper-dot"></span>Draft
+    </li>
+    <li class="stepper-line {% if s in 'SUBMITTED,APPROVED,REJECTED' %}done{% endif %}"></li>
+    <li class="stepper-step {% if s == 'SUBMITTED' %}active{% elif s in 'APPROVED,REJECTED' %}done{% endif %}">
+        <span class="stepper-dot"></span>Submitted
+    </li>
+    <li class="stepper-line {% if s in 'APPROVED,REJECTED' %}{% if s == 'REJECTED' %}rejected{% else %}done{% endif %}{% endif %}"></li>
+    <li class="stepper-step {% if s == 'APPROVED' %}done active{% elif s == 'REJECTED' %}rejected{% endif %}">
+        <span class="stepper-dot"></span>{% if s == 'REJECTED' %}Rejected{% else %}Approved{% endif %}
+    </li>
+</ul>
+{% endwith %}

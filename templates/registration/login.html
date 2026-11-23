@@ -1,49 +1,43 @@
 {% extends "base.html" %}
-
+{% load static %}
 {% block title %}Sign in{% endblock %}
+{% block nav %}{% endblock %}
 
 {% block content %}
-<div class="grid overflow-hidden rounded-3xl border border-line md:grid-cols-2">
+<div style="max-width:420px;margin:40px auto 0;">
 
-    <div class="relative hidden min-h-[28rem] md:block">
-        <div class="absolute inset-0 bg-gradient-to-br from-emerald-900 via-ink to-ink"></div>
-        <div class="absolute inset-0 bg-cover bg-center opacity-40" style="background-image:url('PASTE_YOUR_UNSPLASH_URL_HERE');"></div>
-        <div class="absolute inset-0 bg-gradient-to-t from-ink via-ink/50 to-transparent"></div>
-        <div class="relative flex h-full flex-col justify-end p-10">
-            <h2 class="text-2xl font-semibold leading-snug text-white">Every payroll change,<br>accounted for.</h2>
-            <p class="mt-3 max-w-xs text-sm text-slate-400">Append-only records, hash-chained and verified on demand.</p>
-        </div>
+    <div style="text-align:center;margin-bottom:24px;">
+        <img src="{% static 'img/logo.jpeg' %}" alt="Payroll Audit" style="height:80px;width:auto;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:12px;">
+        <h1 style="margin:14px 0 4px;color:var(--mku-blue);font-size:1.6rem;letter-spacing:0.5px;">PAYROLL AUDIT</h1>
+        <p style="margin:0 0 6px;color:var(--mku-muted);font-size:0.95rem;">Automated Payroll Audit &amp; Resource Verification System</p>
+        <p style="margin:0;color:#000;font-size:0.78rem;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;">Accuracy &middot; Compliance &middot; Integrity</p>
+        <p style="margin:6px 0 0;color:#000;font-size:1rem;font-weight:400;">Welcome — please sign in to continue</p>
     </div>
 
-    <div class="bg-panel p-10 sm:p-12">
-        <h1 class="text-2xl font-semibold tracking-tight text-white">Sign in</h1>
-        <p class="mt-1 text-sm text-slate-400">Use your staff credentials.</p>
+    <div class="mku-surface" style="padding:28px;">
+        <p style="margin:0 0 16px;color:var(--mku-blue);font-size:1.05rem;font-weight:600;">Welcome back</p>
+        <p style="margin:0 0 18px;color:var(--mku-muted);font-size:0.9rem;">Sign in with your staff credentials to continue.</p>
 
         {% if form.errors %}
-            <div class="mt-6 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
-                Username and password did not match.
-            </div>
+            <p class="mku-alert">Username and password did not match.</p>
         {% endif %}
 
-        <form method="post" class="mt-8 space-y-5">
+        <form method="post" style="display:grid;gap:14px;">
             {% csrf_token %}
-
-            <div>
-                <label for="id_username" class="mb-1.5 block text-sm font-medium text-slate-300">Username</label>
-                <input type="text" name="username" id="id_username" autocomplete="username" required autofocus
-                       class="w-full rounded-lg border border-line bg-ink px-3 py-2.5 text-slate-100 outline-none transition focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20">
+            <div class="mku-field">
+                <label for="id_username">Username</label>
+                <input type="text" name="username" id="id_username" autocomplete="username" required autofocus class="mku-input">
             </div>
-
-            <div>
-                <label for="id_password" class="mb-1.5 block text-sm font-medium text-slate-300">Password</label>
-                <input type="password" name="password" id="id_password" autocomplete="current-password" required
-                       class="w-full rounded-lg border border-line bg-ink px-3 py-2.5 text-slate-100 outline-none transition focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20">
+            <div class="mku-field">
+                <label for="id_password">Password</label>
+                <input type="password" name="password" id="id_password" autocomplete="current-password" required class="mku-input">
             </div>
-
-            <button type="submit" class="w-full rounded-lg bg-emerald-500 px-4 py-2.5 font-medium text-emerald-950 transition hover:bg-emerald-400">
-                Sign in
-            </button>
+            <button type="submit" class="mku-btn mku-btn--primary" style="width:100%;margin-top:6px;">Sign in</button>
         </form>
     </div>
+
+    <p style="text-align:center;margin-top:18px;color:var(--mku-muted);font-size:0.8rem;">
+        Mount Kenya University &middot; BBIT Final-Year Project
+    </p>
 </div>
 {% endblock %}

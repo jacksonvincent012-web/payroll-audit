@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Claims{% endblock %}
+
+{% block content %}
+<section class="mku-surface">
+    <p class="mku-eyebrow">Finance</p>
+    <h1 class="mku-title">Expense claims</h1>
+    <p class="mku-lead">{{ claims|length }} claims &middot; every state change is audited</p>
+</section>
+
+<section class="mku-surface">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+        <a class="mku-btn {% if not status %}mku-btn--primary{% else %}mku-btn--ghost{% endif %}" style="padding:6px 12px;font-size:0.8rem;" href="{% url 'expenses:claim_list' %}">All</a>
+        {% for code, label in statuses %}
+            <a class="mku-btn {% if status == code %}mku-btn--primary{% else %}mku-btn--ghost{% endif %}" style="padding:6px 12px;font-size:0.8rem;" href="?status={{ code }}">{{ label }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="mku-table-wrap">
+        <table class="mku-table">
+            <thead>
+                <tr>
+                    <th>Reference</th>
+                    <th>Claimant</th>
+                    <th>Category</th>
+                    <th style="text-align:right;">Amount</th>
+                    <th>Status</th>
+                    <th>Decided by</th>
+                    <th>Submitted</th>
+                    <th>Progress</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in claims %}
+                    <tr>
+                        <td style="font-family:monospace;">{{ c.reference }}</td>
+                        <td>{{ c.claimant.username }}</td>
+                        <td>{{ c.get_category_display }}</td>
+                        <td style="text-align:right;font-family:monospace;">{{ c.amount }}</td>
+                        <td>
+                            {% if c.status == 'APPROVED' %}<span style="color:#16a34a;font-weight:600;">Approved</span>
+                            {% elif c.status == 'REJECTED' %}<span style="color:#dc2626;font-weight:600;">Rejected</span>
+                            {% elif c.status == 'SUBMITTED' %}<span style="color:#d97706;font-weight:600;">Submitted</span>
+                            {% else %}{{ c.status }}{% endif %}
+                        </td>
+                        <td>{% if c.decided_by %}{{ c.decided_by.username }}{% else %}—{% endif %}</td>
+                        <td style="white-space:nowrap;">{% if c.submitted_at %}{{ c.submitted_at|date:"Y-m-d H:i" }}{% else %}—{% endif %}</td>
+                        <td>{% include "expenses/_stepper.html" with claim=c %}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="8">No claims found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

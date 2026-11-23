@@ -3,64 +3,57 @@
 {% block title %}Employees{% endblock %}
 
 {% block content %}
-<div class="mb-8 flex flex-wrap items-end justify-between gap-4">
-    <div>
-        <p class="text-xs uppercase tracking-[0.2em] text-emerald-400">Employees</p>
-        <h1 class="mt-1 text-3xl font-semibold tracking-tight text-white">Staff register</h1>
-        <p class="mt-1 text-sm text-slate-400">
-            {{ employees|length }} records &middot; every change is written to the audit chain
-        </p>
-    </div>
-
+<section class="mku-surface">
+    <p class="mku-eyebrow">Employees</p>
+    <h1 class="mku-title">Staff register</h1>
+    <p class="mku-lead">{{ employees|length }} records &middot; every change is written to the audit chain</p>
     {% if can_edit %}
-        <a href="{% url 'employees:employee_create' %}"
-           class="rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-emerald-950 transition hover:bg-emerald-400">
-            Add employee
-        </a>
+        <div style="margin-top:12px;">
+            <a class="mku-btn mku-btn--primary" href="{% url 'employees:employee_create' %}">Add employee</a>
+        </div>
     {% endif %}
-</div>
+</section>
 
-<div class="overflow-x-auto rounded-2xl border border-line bg-panel">
-    <table class="w-full text-left text-sm">
-        <thead class="border-b border-line bg-white/5 text-xs uppercase tracking-wider text-slate-400">
-            <tr>
-                <th class="px-4 py-3 font-medium">Staff no</th>
-                <th class="px-4 py-3 font-medium">Name</th>
-                <th class="px-4 py-3 font-medium">Department</th>
-                <th class="px-4 py-3 font-medium">Job title</th>
-                <th class="px-4 py-3 text-right font-medium">Gross salary</th>
-                <th class="px-4 py-3 font-medium">Status</th>
-                <th class="px-4 py-3"></th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-line">
-            {% for employee in employees %}
-                <tr class="transition hover:bg-white/5">
-                    <td class="px-4 py-3 font-mono text-slate-400">{{ employee.staff_no }}</td>
-                    <td class="px-4 py-3 text-slate-200">{{ employee.full_name }}</td>
-                    <td class="px-4 py-3 text-slate-400">{{ employee.department }}</td>
-                    <td class="px-4 py-3 text-slate-400">{{ employee.job_title }}</td>
-                    <td class="px-4 py-3 text-right font-mono text-slate-200">{{ employee.gross_salary }}</td>
-                    <td class="px-4 py-3">
-                        {% if employee.is_active %}
-                            <span class="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300">Active</span>
-                        {% else %}
-                            <span class="rounded-full bg-slate-500/10 px-2.5 py-1 text-xs font-medium text-slate-400">Inactive</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-4 py-3 text-right">
-                        {% if can_edit %}
-                            <a href="{% url 'employees:employee_edit' employee.pk %}"
-                               class="text-xs text-emerald-400 hover:text-emerald-300">Edit</a>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% empty %}
+<section class="mku-surface">
+    <div class="mku-table-wrap">
+        <table class="mku-table">
+            <thead>
                 <tr>
-                    <td colspan="7" class="px-4 py-12 text-center text-slate-500">No employees yet.</td>
+                    <th>Staff no</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Job title</th>
+                    <th style="text-align:right;">Gross salary</th>
+                    <th>Status</th>
+                    <th></th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                    <tr>
+                        <td style="font-family:monospace;">{{ employee.staff_no }}</td>
+                        <td>{{ employee.full_name }}</td>
+                        <td>{{ employee.department }}</td>
+                        <td>{{ employee.job_title }}</td>
+                        <td style="text-align:right;font-family:monospace;">{{ employee.gross_salary }}</td>
+                        <td>
+                            {% if employee.is_active %}
+                                <span style="color:#16a34a;font-weight:600;">Active</span>
+                            {% else %}
+                                <span style="color:#64748b;font-weight:600;">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:right;">
+                            {% if can_edit %}
+                                <a class="mku-btn mku-btn--ghost" style="padding:4px 10px;font-size:0.78rem;" href="{% url 'employees:employee_edit' employee.pk %}">Edit</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7">No employees yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
 {% endblock %}

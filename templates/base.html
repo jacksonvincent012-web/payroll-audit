@@ -1,85 +1,79 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Payroll Audit{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        ink: "#0B1220",
-                        panel: "#111C2E",
-                        line: "#1E2B41",
-                    },
-                },
-            },
-        };
-    </script>
+    <link rel="stylesheet" href="{% static 'css/mku.css' %}">
 </head>
-<body class="h-full bg-ink text-slate-200 antialiased">
-<div class="flex min-h-full">
-
-    <aside class="hidden w-60 shrink-0 flex-col border-r border-line bg-panel md:flex">
-        <a href="/" class="flex items-center gap-3 border-b border-line px-5 py-5">
-            <span class="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-sm font-bold text-emerald-400">PA</span>
-            <span class="text-sm font-semibold leading-tight text-white">Payroll<br>Audit System</span>
+<body class="mku-page" id="top">
+<header class="mku-header">
+    <div class="mku-header-inner">
+        <a class="mku-brand" href="/">
+            <img src="{% static 'img/logo.jpeg' %}" alt="Payroll Audit" style="height:40px;width:auto;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+            PAYROLL AUDIT
         </a>
+        {% block nav %}
+        <nav class="mku-nav">
+            <a href="/">Dashboard</a>
 
-        <nav class="flex-1 space-y-1 p-3 text-sm">
-            <a href="/" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if request.path == '/' %}bg-emerald-500/10 text-emerald-300{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
-                <span class="h-1.5 w-1.5 rounded-full bg-current"></span> Dashboard
-            </a>
-            <a href="/employees/" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if '/employees' in request.path %}bg-emerald-500/10 text-emerald-300{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
-                <span class="h-1.5 w-1.5 rounded-full bg-current"></span> Employees
-            </a>
-            <a href="/audit/" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition {% if '/audit' in request.path %}bg-emerald-500/10 text-emerald-300{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
-                <span class="h-1.5 w-1.5 rounded-full bg-current"></span> Audit trail
-            </a>
-            <a href="/admin/" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-400 transition hover:bg-white/5 hover:text-white">
-                <span class="h-1.5 w-1.5 rounded-full bg-current"></span> Administration
-            </a>
-        </nav>
-
-        <div class="border-t border-line p-3">
-            {% if user.is_authenticated %}
-                <div class="flex items-center gap-3 rounded-lg px-2 py-2">
-                    <span class="grid h-8 w-8 place-items-center rounded-full bg-line text-xs font-semibold uppercase text-slate-300">{{ user.username|slice:":2" }}</span>
-                    <div class="min-w-0">
-                        <p class="truncate text-sm font-medium text-white">{{ user.username }}</p>
-                        <p class="truncate text-xs text-slate-500">{{ user.email|default:"no email" }}</p>
-                    </div>
+            <details class="mku-dd">
+                <summary>Employees</summary>
+                <div class="mku-dd-menu">
+                    <a href="/employees/">Staff register</a>
+                    <a href="/employees/new/">Add employee</a>
                 </div>
+            </details>
+
+            <details class="mku-dd">
+                <summary>Finance</summary>
+                <div class="mku-dd-menu">
+                    <a href="/finance/">Ledger summary</a>
+                    <a href="/finance/accounts/">Chart of accounts</a>
+                    <a href="/finance/claims/">All claims</a>
+                </div>
+            </details>
+
+            <details class="mku-dd">
+                <summary>Audit trail</summary>
+                <div class="mku-dd-menu">
+                    <a href="/audit/">Entry log</a>
+                    <a href="/audit/?verify=1">Verify integrity</a>
+                </div>
+            </details>
+
+            <details class="mku-dd">
+                <summary>Administration</summary>
+                <div class="mku-dd-menu">
+                    <a href="/admin/">Django admin</a>
+                </div>
+            </details>
+
+            {% if user.is_authenticated %}
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="mku-btn mku-btn--orange" style="padding:6px 14px;font-size:0.8rem;">Sign out</button>
+                </form>
             {% endif %}
-        </div>
-    </aside>
-
-    <div class="flex min-w-0 flex-1 flex-col">
-        <header class="flex items-center gap-4 border-b border-line bg-panel px-6 py-4">
-            <span class="text-sm font-semibold text-white md:hidden">Payroll Audit</span>
-            <div class="ml-auto flex items-center gap-3">
-                {% if user.is_authenticated %}
-                    <span class="hidden text-sm text-slate-400 sm:inline">{{ user.username }}</span>
-                    <form action="{% url 'logout' %}" method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="rounded-lg border border-line px-3 py-1.5 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white">Sign out</button>
-                    </form>
-                {% endif %}
-            </div>
-        </header>
-
-        <main class="flex-1 px-6 py-8">
-            <div class="mx-auto w-full max-w-6xl">
-                {% block content %}{% endblock %}
-            </div>
-        </main>
-
-        <footer class="border-t border-line px-6 py-4 text-center text-xs text-slate-500">
-            Automated Payroll Audit &amp; Resource Verification System
-        </footer>
+        </nav>
+        {% endblock %}
     </div>
-</div>
+</header>
+
+<main class="mku-main">
+    {% if messages %}
+        {% for message in messages %}
+            <p class="mku-alert {% if message.tags == 'success' %}mku-alert--ok{% endif %}">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="mku-footer">
+    Automated Payroll Audit &amp; Resource Verification System &middot; Mount Kenya University &middot; BBIT Final-Year Project
+</footer>
+
+<a href="#top" class="mku-top" aria-label="Back to top">&#8593;</a>
 </body>
 </html>

@@ -11,6 +11,7 @@ EDITABLE = {
     "job_title",
     "gross_salary",
     "is_active",
+    "is_draft",
 }
 
 
