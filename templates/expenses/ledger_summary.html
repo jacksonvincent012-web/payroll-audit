@@ -3,36 +3,36 @@
 {% block title %}Finance{% endblock %}
 
 {% block content %}
-<section class="mku-surface">
-    <p class="mku-eyebrow">Finance</p>
-    <h1 class="mku-title">Ledger summary</h1>
-    <p class="mku-lead">Every approved claim posts a debit and an equal credit.</p>
+<section class="updated-surface">
+    <p class="updated-eyebrow">Finance</p>
+    <h1 class="updated-title">Ledger summary</h1>
+    <p class="updated-lead">Every approved claim posts a debit and an equal credit.</p>
     <div style="margin-top:12px;">
-        <a class="mku-btn mku-btn--ghost" href="{% url 'expenses:account_list' %}">Chart of accounts</a>
+        <a class="updated-btn updated-btn--ghost" href="{% url 'expenses:account_list' %}">Chart of accounts</a>
     </div>
 </section>
 
-<section class="mku-surface">
-    <div class="mku-stats">
-        <div class="mku-stat">
+<section class="updated-surface">
+    <div class="updated-stats">
+        <div class="updated-stat">
             <strong>{{ debits }}</strong>
             <span>Total debited</span>
         </div>
-        <div class="mku-stat">
+        <div class="updated-stat">
             <strong>{{ credits }}</strong>
             <span>Total credited</span>
         </div>
-        <div class="mku-stat">
+        <div class="updated-stat">
             <strong style="{% if difference != 0 %}color:#dc2626;{% endif %}">{{ difference }}</strong>
             <span>{% if difference == 0 %}Balanced{% else %}Imbalanced{% endif %}</span>
         </div>
     </div>
 </section>
 
-<section class="mku-surface">
-    <p class="mku-eyebrow">By category</p>
-    <div class="mku-table-wrap">
-        <table class="mku-table">
+<section class="updated-surface">
+    <p class="updated-eyebrow">By category</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
             <thead>
                 <tr>
                     <th>Category</th>
@@ -53,10 +53,10 @@
     </div>
 </section>
 
-<section class="mku-surface">
-    <p class="mku-eyebrow">Recent postings</p>
-    <div class="mku-table-wrap">
-        <table class="mku-table">
+<section class="updated-surface">
+    <p class="updated-eyebrow">Recent postings</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
             <thead>
                 <tr>
                     <th>Claim</th>
@@ -81,10 +81,10 @@
     </div>
 </section>
 
-<section class="mku-surface">
-    <p class="mku-eyebrow">Trial balance by account</p>
-    <div class="mku-table-wrap">
-        <table class="mku-table">
+<section class="updated-surface">
+    <p class="updated-eyebrow">Trial balance by account</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
             <thead>
                 <tr>
                     <th>Code</th>

@@ -3,32 +3,32 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<section class="mku-surface">
-    <p class="mku-eyebrow">Employees</p>
-    <h1 class="mku-title">{{ title }}</h1>
-    <p class="mku-lead">Every change is recorded to the audit chain in real time. No ghost workers.</p>
+<section class="updated-surface">
+    <p class="updated-eyebrow">Employees</p>
+    <h1 class="updated-title">{{ title }}</h1>
+    <p class="updated-lead">Every change is recorded to the audit chain in real time. No ghost workers.</p>
 </section>
 
-<section class="mku-surface" style="max-width:720px;">
+<section class="updated-surface" style="max-width:720px;">
     {% if form.non_field_errors %}
-        <p class="mku-alert">{{ form.non_field_errors }}</p>
+        <p class="updated-alert">{{ form.non_field_errors }}</p>
     {% endif %}
 
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:8px 12px;background:#f1f5fa;border-radius:8px;border:1px solid #e3e8ef;">
         <span id="record-status" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#cbd5e1;transition:background .2s;"></span>
-        <span id="record-label" style="font-size:0.82rem;color:var(--mku-muted);font-weight:600;">Ready</span>
-        <span style="margin-left:auto;font-size:0.75rem;color:var(--mku-muted);">Live capture active</span>
+        <span id="record-label" style="font-size:0.82rem;color:var(--updated-muted);font-weight:600;">Ready</span>
+        <span style="margin-left:auto;font-size:0.75rem;color:var(--updated-muted);">Live capture active</span>
     </div>
 
     <form method="post" id="employee-form" style="display:grid;gap:14px;">
         {% csrf_token %}
 
         {% for field in form %}
-            <div class="mku-field">
+            <div class="updated-field">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
                 {% if field.help_text %}
-                    <p style="font-size:0.8rem;color:var(--mku-muted);">{{ field.help_text }}</p>
+                    <p style="font-size:0.8rem;color:var(--updated-muted);">{{ field.help_text }}</p>
                 {% endif %}
                 {% for error in field.errors %}
                     <p style="font-size:0.8rem;color:#dc2626;">{{ error }}</p>
@@ -37,8 +37,8 @@
         {% endfor %}
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button type="submit" class="mku-btn mku-btn--primary">Save</button>
-            <a class="mku-btn mku-btn--ghost" href="{% url 'employees:employee_list' %}">Cancel</a>
+            <button type="submit" class="updated-btn updated-btn--primary">Save</button>
+            <a class="updated-btn updated-btn--ghost" href="{% url 'employees:employee_list' %}">Cancel</a>
         </div>
     </form>
 </section>
@@ -67,7 +67,7 @@
         } else {
             dot.style.background = "#cbd5e1";
             label.textContent = "Ready";
-            label.style.color = "var(--mku-muted)";
+            label.style.color = "var(--updated-muted)";
         }
     }
 

@@ -3,32 +3,32 @@
 {% block title %}Audit trail{% endblock %}
 
 {% block content %}
-<section class="mku-surface">
-    <p class="mku-eyebrow">Audit trail</p>
-    <h1 class="mku-title">Entry log</h1>
-    <p class="mku-lead">{{ entries|length }} entries &middot; append-only &middot; hash-chained</p>
+<section class="updated-surface">
+    <p class="updated-eyebrow">Audit trail</p>
+    <h1 class="updated-title">Entry log</h1>
+    <p class="updated-lead">{{ entries|length }} entries &middot; append-only &middot; hash-chained</p>
     <div style="margin-top:12px;">
-        <a class="mku-btn mku-btn--primary" href="?verify=1">Verify integrity</a>
+        <a class="updated-btn updated-btn--primary" href="?verify=1">Verify integrity</a>
     </div>
 </section>
 
 {% if result %}
     {% if result.ok %}
-        <section class="mku-surface" style="border-color:#86efac;background:#f0fdf4;">
-            <p class="mku-eyebrow" style="color:#166534;">Chain intact</p>
-            <p class="mku-lead" style="color:#166534;margin:0;">All {{ entries|length }} entries hash and link correctly.</p>
+        <section class="updated-surface" style="border-color:#86efac;background:#f0fdf4;">
+            <p class="updated-eyebrow" style="color:#166534;">Chain intact</p>
+            <p class="updated-lead" style="color:#166534;margin:0;">All {{ entries|length }} entries hash and link correctly.</p>
         </section>
     {% else %}
-        <section class="mku-surface" style="border-color:#fca5a5;background:#fef2f2;">
-            <p class="mku-eyebrow" style="color:#991b1b;">Chain broken</p>
-            <p class="mku-lead" style="color:#991b1b;margin:0;">{{ result.reason }}</p>
+        <section class="updated-surface" style="border-color:#fca5a5;background:#fef2f2;">
+            <p class="updated-eyebrow" style="color:#991b1b;">Chain broken</p>
+            <p class="updated-lead" style="color:#991b1b;margin:0;">{{ result.reason }}</p>
         </section>
     {% endif %}
 {% endif %}
 
-<section class="mku-surface">
-    <div class="mku-table-wrap">
-        <table class="mku-table">
+<section class="updated-surface">
+    <div class="updated-table-wrap">
+        <table class="updated-table">
             <thead>
                 <tr>
                     <th>Seq</th>
@@ -52,9 +52,9 @@
                             {% else %}<span style="color:#d97706;font-weight:600;">{{ e.action }}</span>{% endif %}
                         </td>
                         <td>{{ e.entity_type }}:{{ e.entity_id }}</td>
-                        <td style="font-family:monospace;font-size:0.82rem;font-weight:600;color:var(--mku-blue);" title="{{ e.entry_hash }}">{{ e.entry_hash|slice:":16" }}&hellip;</td>
+                        <td style="font-family:monospace;font-size:0.82rem;font-weight:600;color:var(--updated-blue);" title="{{ e.entry_hash }}">{{ e.entry_hash|slice:":16" }}&hellip;</td>
                         <td style="text-align:right;">
-                            <a class="mku-btn mku-btn--ghost" style="padding:4px 10px;font-size:0.78rem;" href="{% url 'auditlog:entry_detail' e.pk %}">View</a>
+                            <a class="updated-btn updated-btn--ghost" style="padding:4px 10px;font-size:0.78rem;" href="{% url 'auditlog:entry_detail' e.pk %}">View</a>
                         </td>
                     </tr>
                 {% empty %}

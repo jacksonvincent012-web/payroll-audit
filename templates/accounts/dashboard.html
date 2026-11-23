@@ -3,21 +3,21 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<section class="mku-surface">
-    <p class="mku-eyebrow">Dashboard</p>
-    <h1 class="mku-title">{{ user.username }}</h1>
-    <p class="mku-lead">{{ user.email|default:"no email on file" }}</p>
+<section class="updated-surface">
+    <p class="updated-eyebrow">Dashboard</p>
+    <h1 class="updated-title">{{ user.username }}</h1>
+    <p class="updated-lead">{{ user.email|default:"no email on file" }}</p>
 
-    <div class="mku-stats">
-        <div class="mku-stat">
+    <div class="updated-stats">
+        <div class="updated-stat">
             <strong>{{ audit_count }}</strong>
             <span>Audit entries</span>
         </div>
-        <div class="mku-stat">
+        <div class="updated-stat">
             <strong>{{ user_count }}</strong>
             <span>System users</span>
         </div>
-        <div class="mku-stat">
+        <div class="updated-stat">
             <strong>{% if chain_ok %}Intact{% else %}Broken{% endif %}</strong>
             <span>Chain status</span>
         </div>
@@ -25,15 +25,15 @@
 
     {% if can_audit %}
     <div style="margin-top:18px;">
-        <a class="mku-btn mku-btn--primary" href="/audit/?verify=1">Verify audit integrity</a>
+        <a class="updated-btn updated-btn--primary" href="/audit/?verify=1">Verify audit integrity</a>
     </div>
     {% endif %}
 </section>
 
-<section class="mku-surface">
-    <p class="mku-eyebrow">Recent activity</p>
-    <div class="mku-table-wrap">
-        <table class="mku-table">
+<section class="updated-surface">
+    <p class="updated-eyebrow">Recent activity</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
             <thead>
                 <tr>
                     <th>Action</th>
@@ -57,11 +57,11 @@
 </section>
 
 {% if can_decide %}
-<section class="mku-surface">
-    <p class="mku-eyebrow">Pending my decision</p>
-    <p class="mku-lead">Submitted claims waiting for an approver.</p>
-    <div class="mku-table-wrap">
-        <table class="mku-table">
+<section class="updated-surface">
+    <p class="updated-eyebrow">Pending my decision</p>
+    <p class="updated-lead">Submitted claims waiting for an approver.</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
             <thead>
                 <tr>
                     <th>Claim</th>
@@ -91,11 +91,11 @@
 </section>
 {% endif %}
 
-<section class="mku-surface">
-    <p class="mku-eyebrow">Recent claim decisions</p>
-    <p class="mku-lead">Who decided what, and when — so two approvers never work the same claim blind.</p>
-    <div class="mku-table-wrap">
-        <table class="mku-table">
+<section class="updated-surface">
+    <p class="updated-eyebrow">Recent claim decisions</p>
+    <p class="updated-lead">Who decided what, and when — so two approvers never work the same claim blind.</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
             <thead>
                 <tr>
                     <th>Claim</th>
@@ -128,27 +128,27 @@
     </div>
 </section>
 
-<section class="mku-surface">
-    <p class="mku-eyebrow">Roles &amp; assurance</p>
+<section class="updated-surface">
+    <p class="updated-eyebrow">Roles &amp; assurance</p>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
         {% if user.is_superuser %}
-            <span class="mku-btn mku-btn--outline" style="padding:6px 14px;font-size:0.8rem;">Superuser</span>
+            <span class="updated-btn updated-btn--outline" style="padding:6px 14px;font-size:0.8rem;">Superuser</span>
         {% endif %}
         {% for role in user.roles.all %}
-            <span class="mku-btn mku-btn--ghost" style="padding:6px 14px;font-size:0.8rem;">{{ role.name }}</span>
+            <span class="updated-btn updated-btn--ghost" style="padding:6px 14px;font-size:0.8rem;">{{ role.name }}</span>
         {% empty %}
             {% if not user.is_superuser %}
-                <span class="mku-lead" style="margin:0;">No roles assigned.</span>
+                <span class="updated-lead" style="margin:0;">No roles assigned.</span>
             {% endif %}
         {% endfor %}
     </div>
-    <ul style="margin:0;padding-left:18px;color:var(--mku-muted);font-size:0.9rem;line-height:1.8;">
+    <ul style="margin:0;padding-left:18px;color:var(--updated-muted);font-size:0.9rem;line-height:1.8;">
         <li>HMAC-SHA256 chain</li>
         <li>Append-only at database level</li>
         <li>Separation of duty enforced</li>
     </ul>
     {% if not chain_ok %}
-        <p class="mku-alert" style="margin-top:14px;">{{ chain_reason }}</p>
+        <p class="updated-alert" style="margin-top:14px;">{{ chain_reason }}</p>
     {% endif %}
 </section>
 {% endblock %}

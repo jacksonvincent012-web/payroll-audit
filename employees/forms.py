@@ -2,7 +2,7 @@ from django import forms
 
 from employees.models import Employee
 
-INPUT = "mku-input"
+INPUT = "updated-input"
 
 
 class EmployeeForm(forms.ModelForm):

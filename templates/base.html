@@ -5,47 +5,47 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Payroll Audit{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/mku.css' %}">
+    <link rel="stylesheet" href="{% static 'css/updated.css' %}">
 </head>
-<body class="mku-page" id="top">
-<header class="mku-header">
-    <div class="mku-header-inner">
-        <a class="mku-brand" href="/">
+<body class="updated-page" id="top">
+<header class="updated-header">
+    <div class="updated-header-inner">
+        <a class="updated-brand" href="/">
             <img src="{% static 'img/logo.jpeg' %}" alt="Payroll Audit" style="height:40px;width:auto;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
             PAYROLL AUDIT
         </a>
         {% block nav %}
-        <nav class="mku-nav">
+        <nav class="updated-nav">
             <a href="/">Dashboard</a>
 
-            <details class="mku-dd">
+            <details class="updated-dd">
                 <summary>Employees</summary>
-                <div class="mku-dd-menu">
+                <div class="updated-dd-menu">
                     <a href="/employees/">Staff register</a>
                     <a href="/employees/new/">Add employee</a>
                 </div>
             </details>
 
-            <details class="mku-dd">
+            <details class="updated-dd">
                 <summary>Finance</summary>
-                <div class="mku-dd-menu">
+                <div class="updated-dd-menu">
                     <a href="/finance/">Ledger summary</a>
                     <a href="/finance/accounts/">Chart of accounts</a>
                     <a href="/finance/claims/">All claims</a>
                 </div>
             </details>
 
-            <details class="mku-dd">
+            <details class="updated-dd">
                 <summary>Audit trail</summary>
-                <div class="mku-dd-menu">
+                <div class="updated-dd-menu">
                     <a href="/audit/">Entry log</a>
                     <a href="/audit/?verify=1">Verify integrity</a>
                 </div>
             </details>
 
-            <details class="mku-dd">
+            <details class="updated-dd">
                 <summary>Administration</summary>
-                <div class="mku-dd-menu">
+                <div class="updated-dd-menu">
                     <a href="/admin/">Django admin</a>
                 </div>
             </details>
@@ -53,7 +53,7 @@
             {% if user.is_authenticated %}
                 <form action="{% url 'logout' %}" method="post" style="display:inline;">
                     {% csrf_token %}
-                    <button type="submit" class="mku-btn mku-btn--orange" style="padding:6px 14px;font-size:0.8rem;">Sign out</button>
+                    <button type="submit" class="updated-btn updated-btn--orange" style="padding:6px 14px;font-size:0.8rem;">Sign out</button>
                 </form>
             {% endif %}
         </nav>
@@ -61,19 +61,19 @@
     </div>
 </header>
 
-<main class="mku-main">
+<main class="updated-main">
     {% if messages %}
         {% for message in messages %}
-            <p class="mku-alert {% if message.tags == 'success' %}mku-alert--ok{% endif %}">{{ message }}</p>
+            <p class="updated-alert {% if message.tags == 'success' %}updated-alert--ok{% endif %}">{{ message }}</p>
         {% endfor %}
     {% endif %}
     {% block content %}{% endblock %}
 </main>
 
-<footer class="mku-footer">
-    Automated Payroll Audit &amp; Resource Verification System &middot; Mount Kenya University &middot; BBIT Final-Year Project
+<footer class="updated-footer">
+    Automated Payroll Audit &amp; Resource Verification System &middot; BBIT Final-Year Project
 </footer>
 
-<a href="#top" class="mku-top" aria-label="Back to top">&#8593;</a>
+<a href="#top" class="updated-top" aria-label="Back to top">&#8593;</a>
 </body>
 </html>

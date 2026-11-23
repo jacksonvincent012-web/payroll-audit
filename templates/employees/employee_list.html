@@ -3,20 +3,20 @@
 {% block title %}Employees{% endblock %}
 
 {% block content %}
-<section class="mku-surface">
-    <p class="mku-eyebrow">Employees</p>
-    <h1 class="mku-title">Staff register</h1>
-    <p class="mku-lead">{{ employees|length }} records &middot; every change is written to the audit chain</p>
+<section class="updated-surface">
+    <p class="updated-eyebrow">Employees</p>
+    <h1 class="updated-title">Staff register</h1>
+    <p class="updated-lead">{{ employees|length }} records &middot; every change is written to the audit chain</p>
     {% if can_edit %}
         <div style="margin-top:12px;">
-            <a class="mku-btn mku-btn--primary" href="{% url 'employees:employee_create' %}">Add employee</a>
+            <a class="updated-btn updated-btn--primary" href="{% url 'employees:employee_create' %}">Add employee</a>
         </div>
     {% endif %}
 </section>
 
-<section class="mku-surface">
-    <div class="mku-table-wrap">
-        <table class="mku-table">
+<section class="updated-surface">
+    <div class="updated-table-wrap">
+        <table class="updated-table">
             <thead>
                 <tr>
                     <th>Staff no</th>
@@ -45,7 +45,7 @@
                         </td>
                         <td style="text-align:right;">
                             {% if can_edit %}
-                                <a class="mku-btn mku-btn--ghost" style="padding:4px 10px;font-size:0.78rem;" href="{% url 'employees:employee_edit' employee.pk %}">Edit</a>
+                                <a class="updated-btn updated-btn--ghost" style="padding:4px 10px;font-size:0.78rem;" href="{% url 'employees:employee_edit' employee.pk %}">Edit</a>
                             {% endif %}
                         </td>
                     </tr>

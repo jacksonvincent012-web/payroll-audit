@@ -3,22 +3,22 @@
 {% block title %}Claims{% endblock %}
 
 {% block content %}
-<section class="mku-surface">
-    <p class="mku-eyebrow">Finance</p>
-    <h1 class="mku-title">Expense claims</h1>
-    <p class="mku-lead">{{ claims|length }} claims &middot; every state change is audited</p>
+<section class="updated-surface">
+    <p class="updated-eyebrow">Finance</p>
+    <h1 class="updated-title">Expense claims</h1>
+    <p class="updated-lead">{{ claims|length }} claims &middot; every state change is audited</p>
 </section>
 
-<section class="mku-surface">
+<section class="updated-surface">
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
-        <a class="mku-btn {% if not status %}mku-btn--primary{% else %}mku-btn--ghost{% endif %}" style="padding:6px 12px;font-size:0.8rem;" href="{% url 'expenses:claim_list' %}">All</a>
+        <a class="updated-btn {% if not status %}updated-btn--primary{% else %}updated-btn--ghost{% endif %}" style="padding:6px 12px;font-size:0.8rem;" href="{% url 'expenses:claim_list' %}">All</a>
         {% for code, label in statuses %}
-            <a class="mku-btn {% if status == code %}mku-btn--primary{% else %}mku-btn--ghost{% endif %}" style="padding:6px 12px;font-size:0.8rem;" href="?status={{ code }}">{{ label }}</a>
+            <a class="updated-btn {% if status == code %}updated-btn--primary{% else %}updated-btn--ghost{% endif %}" style="padding:6px 12px;font-size:0.8rem;" href="?status={{ code }}">{{ label }}</a>
         {% endfor %}
     </div>
 
-    <div class="mku-table-wrap">
-        <table class="mku-table">
+    <div class="updated-table-wrap">
+        <table class="updated-table">
             <thead>
                 <tr>
                     <th>Reference</th>
