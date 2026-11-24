@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}{{ employee.staff_no }}{% endblock %}
+
+{% block content %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Employee record</p>
+    <h1 class="updated-title">{{ employee.full_name }}</h1>
+    <p class="updated-lead">
+        {{ employee.staff_no }} &middot; {{ employee.department }} &middot;
+        {% if employee.is_active %}Active{% else %}Inactive{% endif %}
+    </p>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <a class="updated-btn updated-btn--ghost" href="{% url 'employees:employee_list' %}">Back to register</a>
+        {% if can_edit %}
+            <a class="updated-btn updated-btn--primary" href="{% url 'employees:employee_edit' employee.pk %}">Edit employee</a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="updated-surface">
+    <p class="updated-eyebrow">Recorded details</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
+            <tbody>
+                <tr><th style="width:220px;">Staff no</th><td style="font-family:monospace;">{{ employee.staff_no }}</td></tr>
+                <tr><th>Full name</th><td>{{ employee.full_name }}</td></tr>
+                <tr><th>National ID</th><td style="font-family:monospace;">{{ employee.national_id }}</td></tr>
+                <tr><th>Department</th><td>{{ employee.department }}</td></tr>
+                <tr><th>Job title</th><td>{{ employee.job_title }}</td></tr>
+                <tr><th>Gross salary</th><td style="font-family:monospace;">{{ employee.gross_salary }}</td></tr>
+                <tr><th>Status</th><td>{% if employee.is_active %}Active{% else %}Inactive{% endif %}{% if employee.is_draft %} &middot; draft{% endif %}</td></tr>
+                <tr><th>Created</th><td>{{ employee.created_at|date:"Y-m-d H:i" }}</td></tr>
+                <tr><th>Last updated</th><td>{{ employee.updated_at|date:"Y-m-d H:i" }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="updated-surface">
+    <p class="updated-eyebrow">Verification video</p>
+    {% if employee.video %}
+        {% if can_watch %}
+            <video controls preload="metadata" style="width:100%;max-width:720px;border-radius:12px;background:#000;display:block;">
+                <source src="{% url 'employees:employee_video' employee.pk %}" type="video/mp4">
+                Your browser cannot play this video.
+            </video>
+            <p class="updated-lead" style="margin-top:10px;font-size:0.85rem;">
+                {{ employee.video.name }} &middot;
+                <a href="{% url 'employees:employee_video' employee.pk %}" target="_blank" rel="noopener">Open in a new tab</a>
+            </p>
+        {% else %}
+            <p class="updated-lead">A verification video is on file. Your role cannot watch it.</p>
+        {% endif %}
+    {% else %}
+        <p class="updated-lead">No verification video on file.</p>
+    {% endif %}
+</section>
+
+<section class="updated-surface">
+    <p class="updated-eyebrow">Audit history</p>
+    <p class="updated-lead">{{ history|length }} recent entries for this staff number</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
+            <thead>
+                <tr>
+                    <th>Seq</th>
+                    <th>When</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Hash</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in history %}
+                    <tr>
+                        <td>{{ e.seq }}</td>
+                        <td style="white-space:nowrap;">{{ e.occurred_at|date:"Y-m-d H:i" }}</td>
+                        <td>{{ e.actor.username }}</td>
+                        <td>
+                            {% if e.action == 'CREATE' %}<span style="color:#16a34a;font-weight:600;">{{ e.action }}</span>
+                            {% elif e.action == 'DELETE' %}<span style="color:#dc2626;font-weight:600;">{{ e.action }}</span>
+                            {% else %}<span style="color:#d97706;font-weight:600;">{{ e.action }}</span>{% endif %}
+                        </td>
+                        <td style="font-family:monospace;font-size:0.82rem;font-weight:600;color:var(--updated-blue);">{{ e.entry_hash|slice:":16" }}&hellip;</td>
+                        <td style="text-align:right;">
+                            {% if can_audit %}
+                                <a class="updated-btn updated-btn--ghost" style="padding:4px 10px;font-size:0.78rem;" href="{% url 'auditlog:entry_detail' e.pk %}">View</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6">No audit entries for this employee yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

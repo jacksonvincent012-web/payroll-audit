@@ -1,5 +1,6 @@
 from django.core.exceptions import PermissionDenied
 import json
+import mimetypes
 
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404, JsonResponse
@@ -9,12 +10,15 @@ from django.utils import timezone
 from datetime import timedelta
 
 from accounts.decorators import role_required
+from auditlog.models import AuditEntry
 from employees.forms import EmployeeForm
 from employees.models import Employee
 from employees.services import create_employee, update_employee
 
 VIEW_ROLES = ("HR_OFFICER", "ADMIN", "ACCOUNTANT", "AUDITOR", "APPROVER")
 EDIT_ROLES = ("HR_OFFICER",)
+VIDEO_ROLES = ("HR_OFFICER", "APPROVER", "AUDITOR", "ADMIN")
+AUDIT_ROLES = ("AUDITOR", "ADMIN")
 
 
 @login_required
@@ -26,6 +30,36 @@ def employee_list(request):
         request,
         "employees/employee_list.html",
         {"employees": Employee.objects.all(), "can_edit": can_edit},
+    )
+
+
+@login_required
+@role_required(*VIEW_ROLES)
+def employee_detail(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    history = (
+        AuditEntry.objects.filter(
+            entity_type="Employee", entity_id=employee.staff_no
+        )
+        .select_related("actor")
+        .order_by("-seq")[:25]
+    )
+    can_audit = request.user.is_superuser or any(
+        request.user.has_role(code) for code in AUDIT_ROLES
+    )
+    can_watch = request.user.is_superuser or any(
+        request.user.has_role(code) for code in VIDEO_ROLES
+    )
+    return render(
+        request,
+        "employees/employee_detail.html",
+        {
+            "employee": employee,
+            "history": history,
+            "can_edit": request.user.has_role("HR_OFFICER"),
+            "can_watch": can_watch,
+            "can_audit": can_audit,
+        },
     )
 
 
@@ -105,8 +139,14 @@ def employee_video(request, pk):
         raise Http404("no verification video")
     if not (
         request.user.is_superuser
-        or request.user.has_role("HR_OFFICER")
-        or request.user.has_role("APPROVER")
+        or any(request.user.has_role(code) for code in VIDEO_ROLES)
     ):
         raise PermissionDenied
-    return FileResponse(employee.video, as_attachment=True, filename=employee.video.name)
+    filename = employee.video.name.rsplit("/", 1)[-1]
+    content_type = mimetypes.guess_type(filename)[0] or "video/mp4"
+    return FileResponse(
+        employee.video,
+        as_attachment=False,
+        filename=filename,
+        content_type=content_type,
+    )
