@@ -374,3 +374,8 @@ body.updated-page {
 @media (prefers-reduced-motion: reduce) {
     .updated-header, .updated-card, .updated-surface { transition: none; }
 }
+
+/* Donut chart interactivity */
+.updated-chart svg { overflow: visible; }
+.updated-chart svg path, .updated-chart svg circle { transition: opacity 0.15s ease, stroke-width 0.15s ease; }
+.updated-chart svg path:hover, .updated-chart svg circle:hover { opacity: 0.82; stroke-width: 42; cursor: pointer; }

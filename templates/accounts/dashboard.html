@@ -61,16 +61,16 @@
     </p>
 
     <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-top:18px;">
-        <div style="flex:0 0 auto;">{{ money.category_chart|safe }}</div>
+        <div class="updated-chart" style="flex:0 0 auto;">{{ chart.svg|safe }}</div>
         <div style="flex:1;min-width:260px;">
-            <p class="updated-eyebrow" style="margin:0 0 6px;">Approved amount by category</p>
+            <p class="updated-eyebrow" style="margin:0 0 6px;">{{ chart.title }}</p>
             <div class="updated-table-wrap">
                 <table class="updated-table">
                     <thead>
-                        <tr><th>Category</th><th style="text-align:right;">Amount (KES)</th><th style="text-align:right;">Share</th></tr>
+                        <tr><th>Item</th><th style="text-align:right;">Amount (KES)</th><th style="text-align:right;">Share</th></tr>
                     </thead>
                     <tbody>
-                        {% for row in money.category_legend %}
+                        {% for row in chart.legend %}
                             <tr>
                                 <td><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:{{ row.colour }};margin-right:8px;"></span>{{ row.label }}</td>
                                 <td style="text-align:right;font-family:monospace;">{{ row.value }}</td>

@@ -55,11 +55,6 @@ def _money_summary():
             }
         )
 
-    chart_items = [
-        {"label": row["name"], "value": row["total"]} for row in by_category
-    ]
-    chart_total = sum((row["value"] for row in chart_items), ZERO)
-
     posted_claims = LedgerEntry.objects.values("claim_id").distinct().count()
     checks = [
         ("Debits vs credits", difference),
@@ -73,6 +68,45 @@ def _money_summary():
         for name, value in checks
     ]
 
+    def chart_for(items, title):
+        total = sum((item["value"] for item in items), ZERO)
+        return {
+            "title": title,
+            "svg": donut_chart(items, total),
+            "legend": chart_legend(items, total),
+        }
+
+    charts = {
+        "category": chart_for(
+            [
+                {"label": row["name"], "value": row["total"]}
+                for row in by_category
+            ],
+            "Approved amount by category",
+        ),
+        "account": chart_for(
+            [
+                {"label": f"{row['code']} {row['name']}", "value": row["debit"]}
+                for row in by_account
+                if row["debit"] > 0
+            ],
+            "Debited amount by account",
+        ),
+        "reconciliation": chart_for(
+            [
+                {
+                    "label": "OK",
+                    "value": Decimal(sum(1 for r in reconciliation if r["result"] == "OK")),
+                },
+                {
+                    "label": "FAIL",
+                    "value": Decimal(sum(1 for r in reconciliation if r["result"] != "OK")),
+                },
+            ],
+            "Reconciliation checks",
+        ),
+    }
+
     return {
         "approved_count": approved_count,
         "submitted_count": ExpenseClaim.objects.filter(
@@ -84,9 +118,7 @@ def _money_summary():
         "difference": difference,
         "by_category": by_category,
         "by_account": by_account,
-        "category_chart": donut_chart(chart_items, chart_total),
-        "category_legend": chart_legend(chart_items, chart_total),
-        "chart_total": chart_total,
+        "charts": charts,
         "reconciliation": reconciliation,
         "balanced": all(row["result"] == "OK" for row in reconciliation),
     }
@@ -155,5 +187,7 @@ def dashboard(request):
         or request.user.roles.filter(code="APPROVER").exists(),
     }
     if request.user.is_superuser:
-        context["money"] = _money_summary()
+        money = _money_summary()
+        context["money"] = money
+        context["chart"] = money["charts"][view_choice]
     return render(request, "accounts/dashboard.html", context)

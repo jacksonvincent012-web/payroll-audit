@@ -64,10 +64,14 @@ class DashboardMoneyTests(TestCase):
         self.assertContains(response, "Reconciliation")
         self.assertContains(response, "Debits vs credits")
         self.assertContains(response, "Approved claims vs posted claims")
+        self.assertContains(response, "Reconciliation checks")
+        self.assertContains(response, "<svg")
 
         response = self.client.get("/?view=account")
         self.assertContains(response, "5100")
         self.assertContains(response, "Tuition")
+        self.assertContains(response, "Debited amount by account")
+        self.assertContains(response, "<svg")
 
     def test_other_roles_get_a_slicer_instead_of_money(self):
         self.client.force_login(self.approver)
