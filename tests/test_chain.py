@@ -1,3 +1,5 @@
+from django.test import SimpleTestCase
+
 from core.chain import canonical, entry_hash, verify
 
 KEY = b"test-key-do-not-use-in-production"
@@ -39,36 +41,39 @@ def build_chain(n=3):
     return chain
 
 
-def test_1_intact_chain_verifies():
-    ok, reason = verify(build_chain(3), KEY)
-    assert ok is True and reason is None
+class ChainTests(SimpleTestCase):
+    def test_1_intact_chain_verifies(self):
+        ok, reason = verify(build_chain(3), KEY)
+        self.assertTrue(ok)
+        self.assertIsNone(reason)
 
+    def test_2_tampered_value_is_detected(self):
+        chain = build_chain(3)
+        chain[1]["old"] = {"salary": 1}
+        ok, reason = verify(chain, KEY)
+        self.assertFalse(ok)
+        self.assertIn("2", reason)
 
-def test_2_tampered_value_is_detected():
-    chain = build_chain(3)
-    chain[1]["old"] = {"salary": 1}
-    ok, reason = verify(chain, KEY)
-    assert ok is False and "2" in reason
+    def test_3_tampered_hash_is_detected(self):
+        chain = build_chain(3)
+        chain[1]["entry_hash"] = "0" * 64
+        ok, reason = verify(chain, KEY)
+        self.assertFalse(ok)
+        self.assertIn("2", reason)
 
+    def test_4_truncation_is_detected_by_checkpoint(self):
+        chain = build_chain(3)
+        checkpoint = (3, chain[2]["entry_hash"])
+        ok, reason = verify(chain[:2], KEY, checkpoint=checkpoint)
+        self.assertFalse(ok)
+        self.assertIn("truncat", reason.lower())
 
-def test_3_tampered_hash_is_detected():
-    chain = build_chain(3)
-    chain[1]["entry_hash"] = "0" * 64
-    ok, reason = verify(chain, KEY)
-    assert ok is False and "2" in reason
+    def test_5_wrong_key_fails(self):
+        ok, reason = verify(build_chain(3), b"wrong-key")
+        self.assertFalse(ok)
+        self.assertIn("1", reason)
 
-
-def test_4_truncation_is_detected_by_checkpoint():
-    chain = build_chain(3)
-    checkpoint = (3, chain[2]["entry_hash"])
-    ok, reason = verify(chain[:2], KEY, checkpoint=checkpoint)
-    assert ok is False and "truncat" in reason.lower()
-
-
-def test_5_wrong_key_fails():
-    ok, reason = verify(build_chain(3), b"wrong-key")
-    assert ok is False and "1" in reason
-
-
-def test_6_canonical_ignores_key_order():
-    assert canonical({"a": 1, "b": 2}) == canonical({"b": 2, "a": 1})
+    def test_6_canonical_ignores_key_order(self):
+        self.assertEqual(
+            canonical({"a": 1, "b": 2}), canonical({"b": 2, "a": 1})
+        )
