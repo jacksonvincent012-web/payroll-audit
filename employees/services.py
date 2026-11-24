@@ -1,10 +1,15 @@
+import logging
+
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.db import transaction
 from django.contrib.auth import get_user_model
 
 from auditlog.services import record
+from core.emailing import is_configured
 from employees.models import Employee
+
+logger = logging.getLogger(__name__)
 
 EDITABLE = {
     "first_name",
@@ -23,6 +28,12 @@ def _notify_verification(actor, employee, action):
     User = get_user_model()
     approvers = [u for u in User.objects.all() if u.has_role("APPROVER")]
     if not approvers:
+        return
+    if not is_configured():
+        logger.warning(
+            "Skipping verification email for %s: email is not configured.",
+            employee.staff_no,
+        )
         return
     video_name = employee.video.name if employee.video else ""
     details = (
@@ -49,14 +60,25 @@ def _notify_verification(actor, employee, action):
                 video_file.close()
             except Exception:
                 pass
-        send_mail(
-            subject="Payroll Audit - Verification video " + action + ": " + str(employee.staff_no),
-            message=details,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[u.email],
-            fail_silently=True,
-            attachments=attachments,
-        )
+        try:
+            message = EmailMessage(
+                subject="Payroll Audit - Verification video "
+                + action
+                + ": "
+                + str(employee.staff_no),
+                body=details,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[u.email],
+            )
+            for name, content, mime in attachments:
+                message.attach(name, content, mime)
+            message.send(fail_silently=False)
+        except Exception:
+            logger.exception(
+                "Could not send verification email for %s to %s",
+                employee.staff_no,
+                u.email,
+            )
 
 
 @transaction.atomic

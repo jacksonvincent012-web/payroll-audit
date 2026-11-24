@@ -35,6 +35,7 @@ JAZZMIN_SETTINGS = {"theme": "darkly"}
 
 # Application definition
 
+
 JAZZMIN_UI_TWEAKS = {
     "theme": "darkly",
     "default_theme_mode": "dark",
@@ -153,8 +154,17 @@ AUTH_USER_MODEL = "accounts.User"
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL = "payroll-audit@payrollaudit.org"
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False") == "True"
+EMAIL_TIMEOUT = 20
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "payroll-audit@payrollaudit.org")
 AUDIT_HMAC_KEY = os.getenv("AUDIT_HMAC_KEY")
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
