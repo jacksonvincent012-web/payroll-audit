@@ -98,6 +98,18 @@ with a logged warning so record keeping never breaks.
 Approvers with an email address receive the verification video for each new or
 updated employee record that has a video attached.
 
+## Dashboard
+
+The landing page is role-aware:
+
+- **Superuser** — a one-page money summary modelled on an audit-ready workbook:
+  KPI cards for approved, debited, credited and the difference (which must read
+  **0.00**), plus a dropdown that switches between breakdown **by category**,
+  **by account** and **reconciliation**. Every reconciliation check must show
+  **OK**; a failure is highlighted in red.
+- **Other roles** — a slicer dropdown filters recent activity by entity type.
+  Money totals are not exposed to non-superusers.
+
 ## Tests
 
 ```powershell

@@ -30,6 +30,102 @@
     {% endif %}
 </section>
 
+{% if is_superuser %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Financial summary</p>
+    <h1 class="updated-title">Money at a glance</h1>
+    <p class="updated-lead">One-page summary &middot; KPI cards + reconciliation &middot; every check must read 0 / OK</p>
+
+    <div class="updated-stats">
+        <div class="updated-stat">
+            <strong>{{ money.total_approved }}</strong>
+            <span>Approved (KES)</span>
+        </div>
+        <div class="updated-stat">
+            <strong>{{ money.total_debit }}</strong>
+            <span>Debited (KES)</span>
+        </div>
+        <div class="updated-stat">
+            <strong>{{ money.total_credit }}</strong>
+            <span>Credited (KES)</span>
+        </div>
+        <div class="updated-stat">
+            <strong style="color:{% if money.balanced %}#16a34a{% else %}#dc2626{% endif %};">{{ money.difference }}</strong>
+            <span>Difference (must be 0.00)</span>
+        </div>
+    </div>
+    <p class="updated-lead" style="margin-top:10px;">
+        {{ money.approved_count }} approved &middot; {{ money.submitted_count }} submitted &middot;
+        {% if money.balanced %}<span style="color:#16a34a;font-weight:600;">Balanced</span>
+        {% else %}<span style="color:#dc2626;font-weight:600;">NOT BALANCED — investigate</span>{% endif %}
+    </p>
+
+    <form method="get" style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <label for="view" style="font-size:0.85rem;color:var(--updated-muted);">Breakdown</label>
+        <select class="updated-select" id="view" name="view" onchange="this.form.submit()" style="max-width:260px;">
+            {% for code, label in view_options %}
+                <option value="{{ code }}" {% if code == view_choice %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <noscript><button type="submit" class="updated-btn updated-btn--ghost">Apply</button></noscript>
+    </form>
+
+    <div class="updated-table-wrap" style="margin-top:14px;">
+        {% if view_choice == 'category' %}
+            <table class="updated-table">
+                <thead><tr><th>Category</th><th style="text-align:right;">Claims</th><th style="text-align:right;">Amount (KES)</th></tr></thead>
+                <tbody>
+                    {% for row in money.by_category %}
+                        <tr><td>{{ row.name }}</td><td style="text-align:right;">{{ row.claims }}</td><td style="text-align:right;font-family:monospace;">{{ row.total }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="3">No approved claims yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% elif view_choice == 'account' %}
+            <table class="updated-table">
+                <thead><tr><th>Code</th><th>Account</th><th style="text-align:right;">Debit (KES)</th><th style="text-align:right;">Credit (KES)</th></tr></thead>
+                <tbody>
+                    {% for row in money.by_account %}
+                        <tr><td style="font-family:monospace;">{{ row.code }}</td><td>{{ row.name }}</td><td style="text-align:right;font-family:monospace;">{{ row.debit }}</td><td style="text-align:right;font-family:monospace;">{{ row.credit }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="4">No ledger accounts yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <table class="updated-table">
+                <thead><tr><th>Check</th><th style="text-align:right;">Value</th><th>Result</th></tr></thead>
+                <tbody>
+                    {% for row in money.reconciliation %}
+                        <tr>
+                            <td>{{ row.check }}</td>
+                            <td style="text-align:right;font-family:monospace;">{{ row.value }}</td>
+                            <td style="font-weight:600;color:{% if row.result == 'OK' %}#16a34a{% else %}#dc2626{% endif %};">{{ row.result }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</section>
+{% else %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Slicer</p>
+    <p class="updated-lead">Filter the activity below by entity type.</p>
+    <form method="get" style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <label for="entity" style="font-size:0.85rem;color:var(--updated-muted);">Entity</label>
+        <select class="updated-select" id="entity" name="entity" onchange="this.form.submit()" style="max-width:260px;">
+            <option value="">All entities</option>
+            {% for code in entity_choices %}
+                <option value="{{ code }}" {% if code == selected_entity %}selected{% endif %}>{{ code }}</option>
+            {% endfor %}
+        </select>
+        <noscript><button type="submit" class="updated-btn updated-btn--ghost">Apply</button></noscript>
+    </form>
+</section>
+{% endif %}
+
 <section class="updated-surface">
     <p class="updated-eyebrow">Recent activity</p>
     <div class="updated-table-wrap">

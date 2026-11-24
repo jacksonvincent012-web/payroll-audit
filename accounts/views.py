@@ -1,11 +1,86 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Q, Sum
 from django.shortcuts import render
 
 from auditlog.models import AuditEntry
 from core.chain import verify
-from expenses.models import ExpenseClaim
+from expenses.models import Account, ExpenseClaim, LedgerEntry
+
+ZERO = Decimal("0.00")
+
+
+def _money_summary():
+    """Build the one-page financial summary, mirroring the Excel workbook."""
+    approved = ExpenseClaim.objects.filter(status=ExpenseClaim.APPROVED)
+    approved_count = approved.count()
+    total_approved = approved.aggregate(total=Sum("amount"))["total"] or ZERO
+
+    totals = LedgerEntry.objects.aggregate(
+        debit=Sum("amount", filter=Q(side=LedgerEntry.DEBIT)),
+        credit=Sum("amount", filter=Q(side=LedgerEntry.CREDIT)),
+    )
+    total_debit = totals["debit"] or ZERO
+    total_credit = totals["credit"] or ZERO
+    difference = total_debit - total_credit
+
+    labels = dict(ExpenseClaim.CATEGORY_CHOICES)
+    by_category = [
+        {
+            "name": labels.get(row["category"], row["category"]),
+            "claims": row["claims"],
+            "total": row["total"] or ZERO,
+        }
+        for row in approved.values("category")
+        .annotate(claims=Count("id"), total=Sum("amount"))
+        .order_by("category")
+    ]
+
+    by_account = []
+    for account in Account.objects.all():
+        agg = LedgerEntry.objects.filter(account=account).aggregate(
+            debit=Sum("amount", filter=Q(side=LedgerEntry.DEBIT)),
+            credit=Sum("amount", filter=Q(side=LedgerEntry.CREDIT)),
+        )
+        by_account.append(
+            {
+                "code": account.code,
+                "name": account.name,
+                "debit": agg["debit"] or ZERO,
+                "credit": agg["credit"] or ZERO,
+            }
+        )
+
+    posted_claims = LedgerEntry.objects.values("claim_id").distinct().count()
+    checks = [
+        ("Debits vs credits", difference),
+        ("Approved claims vs posted claims", approved_count - posted_claims),
+        ("Approved amount vs posted debits", total_approved - total_debit),
+        ("Non-positive ledger lines", LedgerEntry.objects.filter(amount__lte=0).count()),
+        ("Non-positive claims", ExpenseClaim.objects.filter(amount__lte=0).count()),
+    ]
+    reconciliation = [
+        {"check": name, "value": value, "result": "OK" if value == 0 else "FAIL"}
+        for name, value in checks
+    ]
+
+    return {
+        "approved_count": approved_count,
+        "submitted_count": ExpenseClaim.objects.filter(
+            status=ExpenseClaim.SUBMITTED
+        ).count(),
+        "total_approved": total_approved,
+        "total_debit": total_debit,
+        "total_credit": total_credit,
+        "difference": difference,
+        "by_category": by_category,
+        "by_account": by_account,
+        "reconciliation": reconciliation,
+        "balanced": all(row["result"] == "OK" for row in reconciliation),
+    }
 
 
 def _serialise(e):
@@ -33,12 +108,36 @@ def dashboard(request):
 
     pending = ExpenseClaim.objects.filter(status=ExpenseClaim.SUBMITTED)
 
+    entity_choices = list(
+        AuditEntry.objects.values_list("entity_type", flat=True)
+        .distinct()
+        .order_by("entity_type")
+    )
+    selected_entity = request.GET.get("entity", "")
+    if selected_entity not in entity_choices:
+        selected_entity = ""
+    filtered = [e for e in entries if e.entity_type == selected_entity] if selected_entity else entries
+
+    view_options = (
+        ("category", "By category"),
+        ("account", "By account"),
+        ("reconciliation", "Reconciliation"),
+    )
+    view_choice = request.GET.get("view", "category")
+    if view_choice not in [code for code, _ in view_options]:
+        view_choice = "category"
+
     context = {
         "audit_count": len(entries),
         "user_count": get_user_model().objects.count(),
         "chain_ok": ok,
         "chain_reason": reason,
-        "recent": entries[-5:][::-1],
+        "recent": filtered[-5:][::-1],
+        "entity_choices": entity_choices,
+        "selected_entity": selected_entity,
+        "view_options": view_options,
+        "view_choice": view_choice,
+        "is_superuser": request.user.is_superuser,
         "recent_decisions": ExpenseClaim.objects.exclude(decided_by=None)
         .select_related("decided_by", "claimant")
         .order_by("-decided_at")[:5],
@@ -46,4 +145,6 @@ def dashboard(request):
         "can_decide": request.user.is_superuser
         or request.user.roles.filter(code="APPROVER").exists(),
     }
+    if request.user.is_superuser:
+        context["money"] = _money_summary()
     return render(request, "accounts/dashboard.html", context)
