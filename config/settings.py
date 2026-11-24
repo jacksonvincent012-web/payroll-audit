@@ -149,6 +149,9 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # Custom user model
 AUTH_USER_MODEL = "accounts.User"
+AUTHENTICATION_BACKENDS = ("accounts.backends.RateLimitedBackend",)
+LOGIN_FAIL_LIMIT = 5
+LOGIN_FAIL_WINDOW = 900
 
 
 # Email
@@ -166,6 +169,9 @@ EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False") == "True"
 EMAIL_TIMEOUT = 20
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "payroll-audit@payrollaudit.org")
 AUDIT_HMAC_KEY = os.getenv("AUDIT_HMAC_KEY")
+AUDIT_CHECKPOINT_PATH = os.getenv(
+    "AUDIT_CHECKPOINT_PATH", str(BASE_DIR / "checkpoint" / "chain.json")
+)
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"

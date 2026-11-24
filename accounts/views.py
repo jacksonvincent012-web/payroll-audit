@@ -9,6 +9,7 @@ from django.shortcuts import render
 from auditlog.models import AuditEntry
 from core.charts import chart_legend, donut_chart
 from core.chain import verify
+from core.checkpoint import load_checkpoint
 from expenses.models import Account, ExpenseClaim, LedgerEntry
 
 ZERO = Decimal("0.00")
@@ -145,6 +146,7 @@ def dashboard(request):
     ok, reason = verify(
         [_serialise(e) for e in entries],
         settings.AUDIT_HMAC_KEY.encode(),
+        checkpoint=load_checkpoint(),
     )
 
     pending = ExpenseClaim.objects.filter(

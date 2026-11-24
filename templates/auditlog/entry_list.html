@@ -10,6 +10,14 @@
     <div style="margin-top:12px;">
         <a class="updated-btn updated-btn--primary" href="?verify=1">Verify integrity</a>
     </div>
+    <p class="updated-lead" style="margin-top:10px;font-size:0.85rem;">
+        {% if checkpoint %}
+            External checkpoint: seq {{ checkpoint.0 }} &middot;
+            <span style="font-family:monospace;">{{ checkpoint.1|slice:":16" }}&hellip;</span>
+        {% else %}
+            No external checkpoint exported yet.
+        {% endif %}
+    </p>
 </section>
 
 {% if result %}

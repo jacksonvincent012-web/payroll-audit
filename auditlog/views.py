@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, render
 from accounts.decorators import role_required
 from auditlog.models import AuditEntry
 from core.chain import verify
+from core.checkpoint import load_checkpoint
 
 
 def _serialise(e):
@@ -27,16 +28,20 @@ def _serialise(e):
 def entry_list(request):
     entries = list(AuditEntry.objects.all())
 
+    checkpoint = load_checkpoint()
     result = None
     if "verify" in request.GET:
         ok, reason = verify(
             [_serialise(e) for e in entries],
             settings.AUDIT_HMAC_KEY.encode(),
+            checkpoint=checkpoint,
         )
         result = {"ok": ok, "reason": reason}
 
     return render(
-        request, "auditlog/entry_list.html", {"entries": entries, "result": result}
+        request,
+        "auditlog/entry_list.html",
+        {"entries": entries, "result": result, "checkpoint": checkpoint},
     )
 
 

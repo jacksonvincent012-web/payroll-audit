@@ -111,6 +111,22 @@ The landing page is role-aware:
 - **Other roles** — a slicer dropdown filters recent activity by entity type.
   Money totals are not exposed to non-superusers.
 
+## Security hardening
+
+- `config/settings_production.py` gives secure deployment defaults: `DEBUG=False`,
+  `ALLOWED_HOSTS` from the environment, secure cookies, HTTPS redirect, HSTS,
+  `nosniff` and `X-Frame-Options: DENY`. Run
+  `python manage.py check --deploy --settings=config.settings_production` before
+  deployment; a long random `DJANGO_SECRET_KEY` and explicit `ALLOWED_HOSTS`
+  must be supplied in the environment.
+- `accounts/backends.py` blocks an IP after five failed logins for 15 minutes.
+- Verification videos must be mp4/webm/mov with a video content type and at most
+  20 MB (`employees/forms.py`).
+- `python manage.py export_checkpoint` writes the current chain head to
+  `checkpoint/chain.json` (git-ignored). Both the dashboard and the auditor view
+  verify against it, so deletion of the tail of the chain is detected. Point
+  `AUDIT_CHECKPOINT_PATH` at storage outside the application host in production.
+
 ## Expense control
 
 Claims route through approval levels defined by `ApprovalRule`: amounts up to
