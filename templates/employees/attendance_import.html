@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance import{% endblock %}
+
+{% block content %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Employee verification</p>
+    <h1 class="updated-title">Import attendance</h1>
+    <p class="updated-lead">CSV columns: <code>staff_no,date[,hours]</code> &middot; the file is hashed and the hash is written to the audit chain.</p>
+
+    <form method="post" enctype="multipart/form-data" style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        {% csrf_token %}
+        <div class="updated-field"><label for="{{ form.csv_file.id_for_label }}">CSV file</label>{{ form.csv_file }}</div>
+        <button type="submit" class="updated-btn updated-btn--primary">Import</button>
+    </form>
+    {% for error in form.non_field_errors %}<p class="updated-alert" style="margin-top:10px;">{{ error }}</p>{% endfor %}
+</section>
+
+<section class="updated-surface">
+    <p class="updated-eyebrow">Imported batches</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
+            <thead><tr><th>File</th><th>Rows</th><th>SHA-256</th><th>Uploaded by</th><th>When</th></tr></thead>
+            <tbody>
+                {% for batch in batches %}
+                    <tr>
+                        <td>{{ batch.filename }}</td>
+                        <td>{{ batch.row_count }}</td>
+                        <td style="font-family:monospace;font-size:0.8rem;">{{ batch.file_hash|slice:":16" }}&hellip;</td>
+                        <td>{{ batch.uploaded_by.username }}</td>
+                        <td style="white-space:nowrap;">{{ batch.imported_at|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5">No attendance imported yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="updated-surface">
+    <p class="updated-eyebrow">Recent attendance rows</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
+            <thead><tr><th>Staff no</th><th>Date</th><th>Hours</th><th>Batch</th></tr></thead>
+            <tbody>
+                {% for row in records %}
+                    <tr><td style="font-family:monospace;">{{ row.staff_no }}</td><td>{{ row.date }}</td><td>{{ row.hours }}</td><td>{{ row.batch.filename }}</td></tr>
+                {% empty %}
+                    <tr><td colspan="4">No rows yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Verification alerts{% endblock %}
+
+{% block content %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Employee verification</p>
+    <h1 class="updated-title">Verification alerts</h1>
+    <p class="updated-lead">{{ alerts|length }} flags &middot; a flag is not proof &middot; clearing requires a reason and is written to the audit chain</p>
+</section>
+
+<section class="updated-surface">
+    <div class="updated-table-wrap">
+        <table class="updated-table">
+            <thead>
+                <tr><th>Staff no</th><th>Kind</th><th>Severity</th><th>Status</th><th>Raised</th><th>Resolution</th></tr>
+            </thead>
+            <tbody>
+                {% for alert in alerts %}
+                    <tr>
+                        <td style="font-family:monospace;">{{ alert.employee.staff_no }}</td>
+                        <td>{{ alert.get_kind_display }}<br><span style="font-size:0.8rem;color:var(--updated-muted);">{{ alert.note }}</span></td>
+                        <td>
+                            {% if alert.severity == 'HIGH' %}<span style="color:#dc2626;font-weight:600;">High</span>
+                            {% elif alert.severity == 'MEDIUM' %}<span style="color:#d97706;font-weight:600;">Medium</span>
+                            {% else %}<span style="color:#16a34a;font-weight:600;">Low</span>{% endif %}
+                        </td>
+                        <td>{{ alert.get_status_display }}</td>
+                        <td style="white-space:nowrap;">{{ alert.raised_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {% if alert.is_open %}
+                                <form method="post" style="display:flex;gap:6px;flex-wrap:wrap;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="alert_id" value="{{ alert.pk }}">
+                                    <input class="updated-input" name="reason" placeholder="Reason to clear" required style="max-width:220px;font-size:0.8rem;">
+                                    <button type="submit" class="updated-btn updated-btn--ghost" style="padding:4px 10px;font-size:0.75rem;">Clear</button>
+                                </form>
+                            {% else %}
+                                <span style="color:#16a34a;font-weight:600;">Cleared</span><br>
+                                <span style="font-size:0.8rem;color:var(--updated-muted);">{{ alert.clear_reason }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6">No verification alerts raised.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

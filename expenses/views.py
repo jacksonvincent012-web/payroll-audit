@@ -122,5 +122,9 @@ def alert_list(request):
             pass
         return redirect("expenses:alert_list")
 
-    alerts = Alert.objects.select_related("claim", "cleared_by").order_by("-raised_at")
+    alerts = (
+        Alert.objects.filter(claim__isnull=False)
+        .select_related("claim", "cleared_by")
+        .order_by("-raised_at")
+    )
     return render(request, "expenses/alert_list.html", {"alerts": alerts})

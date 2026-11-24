@@ -29,6 +29,8 @@
                 <tr><th>Department</th><td>{{ employee.department }}</td></tr>
                 <tr><th>Job title</th><td>{{ employee.job_title }}</td></tr>
                 <tr><th>Gross salary</th><td style="font-family:monospace;">{{ employee.gross_salary }}</td></tr>
+                <tr><th>Bank account</th><td style="font-family:monospace;">{{ employee.bank_account|default:"—" }}</td></tr>
+                <tr><th>Phone</th><td style="font-family:monospace;">{{ employee.phone|default:"—" }}</td></tr>
                 <tr><th>Status</th><td>{% if employee.is_active %}Active{% else %}Inactive{% endif %}{% if employee.is_draft %} &middot; draft{% endif %}</td></tr>
                 <tr><th>Created</th><td>{{ employee.created_at|date:"Y-m-d H:i" }}</td></tr>
                 <tr><th>Last updated</th><td>{{ employee.updated_at|date:"Y-m-d H:i" }}</td></tr>

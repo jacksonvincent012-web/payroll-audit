@@ -11,9 +11,21 @@ from datetime import timedelta
 
 from accounts.decorators import role_required
 from auditlog.models import AuditEntry
-from employees.forms import EmployeeForm
-from employees.models import Employee
-from employees.services import create_employee, update_employee
+from employees.forms import AttendanceUploadForm, EmployeeForm, PayrollUploadForm
+from employees.models import (
+    AttendanceImport,
+    AttendanceRecord,
+    Employee,
+    PayrollEntry,
+)
+from employees.services import (
+    create_employee,
+    import_attendance,
+    import_payroll,
+    update_employee,
+)
+from expenses.models import Alert
+from expenses.services import ClaimError, clear_alert
 
 VIEW_ROLES = ("HR_OFFICER", "ADMIN", "ACCOUNTANT", "AUDITOR", "APPROVER")
 EDIT_ROLES = ("HR_OFFICER",)
@@ -149,4 +161,77 @@ def employee_video(request, pk):
         as_attachment=False,
         filename=filename,
         content_type=content_type,
+    )
+
+
+@login_required
+@role_required("HR_OFFICER", "ACCOUNTANT", "ADMIN")
+def attendance_import(request):
+    if request.method == "POST":
+        form = AttendanceUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                import_attendance(request.user, form.cleaned_data["csv_file"])
+            except (ValueError, UnicodeDecodeError) as exc:
+                form.add_error(None, str(exc))
+            else:
+                return redirect("employees:attendance_import")
+    else:
+        form = AttendanceUploadForm()
+    return render(
+        request,
+        "employees/attendance_import.html",
+        {
+            "form": form,
+            "batches": AttendanceImport.objects.select_related("uploaded_by")[:20],
+            "records": AttendanceRecord.objects.select_related("batch")[:20],
+        },
+    )
+
+
+@login_required
+@role_required("HR_OFFICER", "ACCOUNTANT", "ADMIN")
+def payroll_import(request):
+    if request.method == "POST":
+        form = PayrollUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            period = form.cleaned_data["period"]
+            try:
+                import_payroll(request.user, form.cleaned_data["csv_file"], period)
+            except (ValueError, UnicodeDecodeError) as exc:
+                form.add_error(None, str(exc))
+            else:
+                return redirect("employees:payroll_import")
+    else:
+        form = PayrollUploadForm()
+    return render(
+        request,
+        "employees/payroll_import.html",
+        {
+            "form": form,
+            "entries": PayrollEntry.objects.all()[:50],
+        },
+    )
+
+
+@login_required
+@role_required("HR_OFFICER", "APPROVER", "AUDITOR", "ADMIN")
+def verification_alerts(request):
+    if request.method == "POST":
+        alert = get_object_or_404(Alert, pk=request.POST.get("alert_id"))
+        try:
+            clear_alert(request.user, alert, request.POST.get("reason", ""))
+        except ClaimError:
+            pass
+        return redirect("employees:verification_alerts")
+
+    alerts = (
+        Alert.objects.filter(employee__isnull=False)
+        .select_related("employee", "cleared_by")
+        .order_by("-raised_at")
+    )
+    return render(
+        request,
+        "employees/verification_alerts.html",
+        {"alerts": alerts},
     )

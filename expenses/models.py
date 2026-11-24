@@ -207,10 +207,20 @@ class Alert(models.Model):
 
     DUPLICATE_CLAIM = "DUPLICATE_CLAIM"
     OVER_LIMIT = "OVER_LIMIT"
+    DUPLICATE_BANK = "DUPLICATE_BANK"
+    DUPLICATE_ID = "DUPLICATE_ID"
+    DUPLICATE_PHONE = "DUPLICATE_PHONE"
+    INACTIVE_ON_PAYROLL = "INACTIVE_ON_PAYROLL"
+    MISSING_ATTENDANCE = "MISSING_ATTENDANCE"
 
     KIND_CHOICES = (
         (DUPLICATE_CLAIM, "Possible duplicate claim"),
         (OVER_LIMIT, "Over spending limit"),
+        (DUPLICATE_BANK, "Shared bank account"),
+        (DUPLICATE_ID, "Shared national ID"),
+        (DUPLICATE_PHONE, "Shared phone number"),
+        (INACTIVE_ON_PAYROLL, "Inactive employee on payroll"),
+        (MISSING_ATTENDANCE, "No attendance record"),
     )
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
@@ -232,9 +242,20 @@ class Alert(models.Model):
     )
 
     claim = models.ForeignKey(
-        ExpenseClaim, on_delete=models.PROTECT, related_name="alerts"
+        ExpenseClaim,
+        on_delete=models.PROTECT,
+        related_name="alerts",
+        null=True,
+        blank=True,
     )
-    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    employee = models.ForeignKey(
+        "employees.Employee",
+        on_delete=models.PROTECT,
+        related_name="alerts",
+        null=True,
+        blank=True,
+    )
+    kind = models.CharField(max_length=24, choices=KIND_CHOICES)
     severity = models.CharField(max_length=6, choices=SEVERITY_CHOICES)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=OPEN)
     note = models.CharField(max_length=200, blank=True)
@@ -253,7 +274,12 @@ class Alert(models.Model):
         ordering = ["-raised_at"]
 
     def __str__(self):
-        return f"{self.severity} {self.kind} on {self.claim.reference}"
+        subject = (
+            self.claim.reference
+            if self.claim
+            else (self.employee.staff_no if self.employee else "unlinked")
+        )
+        return f"{self.severity} {self.kind} on {subject}"
 
     def is_open(self):
         return self.status in (self.OPEN, self.ASSIGNED, self.UNDER_REVIEW, self.ESCALATED)

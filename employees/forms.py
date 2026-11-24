@@ -5,6 +5,15 @@ from employees.models import Employee
 INPUT = "updated-input"
 
 
+class AttendanceUploadForm(forms.Form):
+    csv_file = forms.FileField(label="Attendance CSV")
+
+
+class PayrollUploadForm(forms.Form):
+    period = forms.CharField(max_length=7, help_text="YYYY-MM")
+    csv_file = forms.FileField(label="Payroll CSV")
+
+
 MAX_VIDEO_BYTES = 20 * 1024 * 1024
 VIDEO_EXTENSIONS = (".mp4", ".webm", ".mov")
 
@@ -20,6 +29,8 @@ class EmployeeForm(forms.ModelForm):
             "department",
             "job_title",
             "gross_salary",
+            "bank_account",
+            "phone",
             "is_active",
             "video",
         ]

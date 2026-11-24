@@ -111,6 +111,21 @@ The landing page is role-aware:
 - **Other roles** — a slicer dropdown filters recent activity by entity type.
   Money totals are not exposed to non-superusers.
 
+## Employee verification
+
+Employee records carry bank account and phone fields, normalised into indexed
+columns so `012-345-6789` and `0123456789` compare equal, and `+254712345678`
+matches `0712 345 678`. On save, the service checks for shared bank accounts
+(HIGH), national IDs (HIGH) and phone numbers (LOW).
+
+Attendance is imported from CSV (`staff_no,date[,hours]`). Each import batch
+stores the SHA-256 of the source file in the audit chain. Payroll lines are
+imported from CSV (`staff_no,gross_salary`) for a `YYYY-MM` period; the import
+then raises alerts for inactive employees on payroll (HIGH) and for employees
+on payroll with no attendance in that period (MEDIUM). Alerts are reviewed at
+`/employees/alerts/`; clearing one requires a reason and is audited. A flag is
+a prompt for human review, not proof of wrongdoing.
+
 ## Security hardening
 
 - `config/settings_production.py` gives secure deployment defaults: `DEBUG=False`,

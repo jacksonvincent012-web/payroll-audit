@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Payroll import{% endblock %}
+
+{% block content %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Employee verification</p>
+    <h1 class="updated-title">Import payroll</h1>
+    <p class="updated-lead">CSV columns: <code>staff_no,gross_salary</code> &middot; after import the active-status and attendance checks are rerun for that period.</p>
+
+    <form method="post" enctype="multipart/form-data" style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        {% csrf_token %}
+        <div class="updated-field"><label for="{{ form.period.id_for_label }}">Period (YYYY-MM)</label>{{ form.period }}</div>
+        <div class="updated-field"><label for="{{ form.csv_file.id_for_label }}">CSV file</label>{{ form.csv_file }}</div>
+        <button type="submit" class="updated-btn updated-btn--primary">Import</button>
+    </form>
+    {% for error in form.non_field_errors %}<p class="updated-alert" style="margin-top:10px;">{{ error }}</p>{% endfor %}
+</section>
+
+<section class="updated-surface">
+    <p class="updated-eyebrow">Payroll lines</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
+            <thead><tr><th>Period</th><th>Staff no</th><th style="text-align:right;">Gross salary</th></tr></thead>
+            <tbody>
+                {% for entry in entries %}
+                    <tr><td>{{ entry.period }}</td><td style="font-family:monospace;">{{ entry.staff_no }}</td><td style="text-align:right;font-family:monospace;">{{ entry.gross_salary }}</td></tr>
+                {% empty %}
+                    <tr><td colspan="3">No payroll lines yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
