@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class Account(models.Model):
@@ -28,12 +29,14 @@ class Account(models.Model):
 class ExpenseClaim(models.Model):
     DRAFT = "DRAFT"
     SUBMITTED = "SUBMITTED"
+    PENDING_L2 = "PENDING_L2"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
 
     STATUS_CHOICES = (
         (DRAFT, "Draft"),
         (SUBMITTED, "Submitted"),
+        (PENDING_L2, "Pending second approval"),
         (APPROVED, "Approved"),
         (REJECTED, "Rejected"),
     )
@@ -148,3 +151,109 @@ class LedgerEntry(models.Model):
 
     def __str__(self):
         return f"{self.side} {self.account.code} {self.amount}"
+
+
+class ApprovalRule(models.Model):
+    """Routes a claim by amount to the required number of approval levels."""
+
+    name = models.CharField(max_length=60)
+    min_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    max_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    required_levels = models.PositiveSmallIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["min_amount"]
+
+    def __str__(self):
+        return (
+            f"{self.name}: {self.min_amount}-{self.max_amount} "
+            f"-> {self.required_levels} level(s)"
+        )
+
+
+class ApprovalStep(models.Model):
+    """One decision in a claim's approval trail."""
+
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    DECISION_CHOICES = ((APPROVED, "Approved"), (REJECTED, "Rejected"))
+
+    claim = models.ForeignKey(
+        ExpenseClaim, on_delete=models.PROTECT, related_name="steps"
+    )
+    level = models.PositiveSmallIntegerField()
+    approver = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="approval_steps"
+    )
+    decision = models.CharField(max_length=8, choices=DECISION_CHOICES)
+    note = models.CharField(max_length=200, blank=True)
+    decided_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["level"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["claim", "level"], name="one_decision_per_level"
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.claim.reference} level {self.level}: {self.decision}"
+
+
+class Alert(models.Model):
+    """A raised flag that a human must resolve, with a logged reason."""
+
+    DUPLICATE_CLAIM = "DUPLICATE_CLAIM"
+    OVER_LIMIT = "OVER_LIMIT"
+
+    KIND_CHOICES = (
+        (DUPLICATE_CLAIM, "Possible duplicate claim"),
+        (OVER_LIMIT, "Over spending limit"),
+    )
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+    SEVERITY_CHOICES = ((HIGH, "High"), (MEDIUM, "Medium"), (LOW, "Low"))
+    OPEN = "OPEN"
+    ASSIGNED = "ASSIGNED"
+    UNDER_REVIEW = "UNDER_REVIEW"
+    CLEARED = "CLEARED"
+    ESCALATED = "ESCALATED"
+    CLOSED = "CLOSED"
+    STATUS_CHOICES = (
+        (OPEN, "Open"),
+        (ASSIGNED, "Assigned"),
+        (UNDER_REVIEW, "Under review"),
+        (CLEARED, "Cleared"),
+        (ESCALATED, "Escalated"),
+        (CLOSED, "Closed"),
+    )
+
+    claim = models.ForeignKey(
+        ExpenseClaim, on_delete=models.PROTECT, related_name="alerts"
+    )
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    severity = models.CharField(max_length=6, choices=SEVERITY_CHOICES)
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=OPEN)
+    note = models.CharField(max_length=200, blank=True)
+    raised_at = models.DateTimeField(default=timezone.now)
+    cleared_at = models.DateTimeField(null=True, blank=True)
+    cleared_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="cleared_alerts",
+    )
+    clear_reason = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        ordering = ["-raised_at"]
+
+    def __str__(self):
+        return f"{self.severity} {self.kind} on {self.claim.reference}"
+
+    def is_open(self):
+        return self.status in (self.OPEN, self.ASSIGNED, self.UNDER_REVIEW, self.ESCALATED)

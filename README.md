@@ -111,6 +111,17 @@ The landing page is role-aware:
 - **Other roles** — a slicer dropdown filters recent activity by entity type.
   Money totals are not exposed to non-superusers.
 
+## Expense control
+
+Claims route through approval levels defined by `ApprovalRule`: amounts up to
+KES 100,000 need one approver; larger amounts need two different approvers and
+move to `PENDING_L2` after the first decision. Every decision is stored as an
+`ApprovalStep`, and a user cannot decide the same claim twice. Submitting a
+claim raises an `Alert` for a possible duplicate or for an over-limit amount.
+Alerts are resolved at `/finance/alerts/`; clearing one requires a reason and
+writes an `ALERT_CLEAR` entry to the audit chain. A flag is not proof of
+wrongdoing.
+
 ## Tests
 
 ```powershell

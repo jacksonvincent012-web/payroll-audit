@@ -6,8 +6,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from accounts.decorators import role_required
-from expenses.models import Account, ExpenseClaim, LedgerEntry
-from expenses.services import ClaimError, approve_claim, reject_claim
+from expenses.models import Account, Alert, ExpenseClaim, LedgerEntry
+from expenses.services import ClaimError, approve_claim, clear_alert, reject_claim
 
 VIEW_ROLES = ("ADMIN", "AUDITOR", "ACCOUNTANT")
 
@@ -109,3 +109,18 @@ def account_list(request):
         "expenses/account_list.html",
         {"accounts": accounts},
     )
+
+
+@login_required
+@role_required("ADMIN", "AUDITOR", "APPROVER")
+def alert_list(request):
+    if request.method == "POST":
+        alert = get_object_or_404(Alert, pk=request.POST.get("alert_id"))
+        try:
+            clear_alert(request.user, alert, request.POST.get("reason", ""))
+        except ClaimError:
+            pass
+        return redirect("expenses:alert_list")
+
+    alerts = Alert.objects.select_related("claim", "cleared_by").order_by("-raised_at")
+    return render(request, "expenses/alert_list.html", {"alerts": alerts})

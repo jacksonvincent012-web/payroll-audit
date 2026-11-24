@@ -147,7 +147,9 @@ def dashboard(request):
         settings.AUDIT_HMAC_KEY.encode(),
     )
 
-    pending = ExpenseClaim.objects.filter(status=ExpenseClaim.SUBMITTED)
+    pending = ExpenseClaim.objects.filter(
+        status__in=(ExpenseClaim.SUBMITTED, ExpenseClaim.PENDING_L2)
+    )
 
     entity_choices = list(
         AuditEntry.objects.values_list("entity_type", flat=True)

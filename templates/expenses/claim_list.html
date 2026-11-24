@@ -43,10 +43,11 @@
                             {% if c.status == 'APPROVED' %}<span style="color:#16a34a;font-weight:600;">Approved</span>
                             {% elif c.status == 'REJECTED' %}<span style="color:#dc2626;font-weight:600;">Rejected</span>
                             {% elif c.status == 'SUBMITTED' %}<span style="color:#d97706;font-weight:600;">Submitted</span>
+                            {% elif c.status == 'PENDING_L2' %}<span style="color:#7c3aed;font-weight:600;">Pending 2nd approval</span>
                             {% else %}{{ c.status }}{% endif %}
                         </td>
                         <td>
-                            {% if c.status == 'SUBMITTED' %}
+                            {% if c.status == 'SUBMITTED' or c.status == 'PENDING_L2' %}
                             <form method="post" action="{% url 'expenses:decide_claim' c.pk %}" style="display:inline;">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="APPROVE">
