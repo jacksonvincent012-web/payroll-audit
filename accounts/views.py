@@ -7,6 +7,7 @@ from django.db.models import Count, Q, Sum
 from django.shortcuts import render
 
 from auditlog.models import AuditEntry
+from core.charts import chart_legend, donut_chart
 from core.chain import verify
 from expenses.models import Account, ExpenseClaim, LedgerEntry
 
@@ -54,6 +55,11 @@ def _money_summary():
             }
         )
 
+    chart_items = [
+        {"label": row["name"], "value": row["total"]} for row in by_category
+    ]
+    chart_total = sum((row["value"] for row in chart_items), ZERO)
+
     posted_claims = LedgerEntry.objects.values("claim_id").distinct().count()
     checks = [
         ("Debits vs credits", difference),
@@ -78,6 +84,9 @@ def _money_summary():
         "difference": difference,
         "by_category": by_category,
         "by_account": by_account,
+        "category_chart": donut_chart(chart_items, chart_total),
+        "category_legend": chart_legend(chart_items, chart_total),
+        "chart_total": chart_total,
         "reconciliation": reconciliation,
         "balanced": all(row["result"] == "OK" for row in reconciliation),
     }

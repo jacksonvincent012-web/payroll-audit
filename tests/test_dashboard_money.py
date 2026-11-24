@@ -54,6 +54,9 @@ class DashboardMoneyTests(TestCase):
         self.assertContains(response, "10000.00")
         self.assertContains(response, "Breakdown")
         self.assertContains(response, "Balanced")
+        self.assertContains(response, "<svg")
+        self.assertContains(response, "Approved amount by category")
+        self.assertContains(response, "100.0%")
 
     def test_superuser_can_switch_breakdown_via_dropdown(self):
         self.client.force_login(self.superuser)
@@ -73,6 +76,7 @@ class DashboardMoneyTests(TestCase):
         self.assertContains(response, "All entities")
         self.assertNotContains(response, "Financial summary")
         self.assertNotContains(response, "Debited (KES)")
+        self.assertNotContains(response, "Approved amount by category")
 
     def test_entity_slicer_remembers_the_selection(self):
         self.client.force_login(self.approver)

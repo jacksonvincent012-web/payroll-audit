@@ -5,6 +5,8 @@ Use this when a test run must be isolated from any other test process:
     python manage.py test tests --settings=config.settings_verify
 """
 
+import os
+
 from .settings import *  # noqa: F401,F403
 
 DATABASES = {
@@ -13,7 +15,7 @@ DATABASES = {
         **DATABASES["default"],  # noqa: F405
         "TEST": {
             **DATABASES["default"].get("TEST", {}),  # noqa: F405
-            "NAME": "verify_payroll_audit",
+            "NAME": os.getenv("PAYROLL_TEST_DB", "verify_payroll_audit"),
         },
     },
 }

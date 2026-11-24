@@ -104,7 +104,8 @@ The landing page is role-aware:
 
 - **Superuser** — a one-page money summary modelled on an audit-ready workbook:
   KPI cards for approved, debited, credited and the difference (which must read
-  **0.00**), plus a dropdown that switches between breakdown **by category**,
+  **0.00**), a donut chart with a colour-coded legend showing approved money by
+  category, plus a dropdown that switches between breakdown **by category**,
   **by account** and **reconciliation**. Every reconciliation check must show
   **OK**; a failure is highlighted in red.
 - **Other roles** — a slicer dropdown filters recent activity by entity type.
