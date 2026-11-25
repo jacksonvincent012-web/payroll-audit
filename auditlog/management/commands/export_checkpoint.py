@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from auditlog.models import AuditEntry
-from core.checkpoint import save_checkpoint
+from core.checkpoint import checkpoint_status, save_checkpoint
 
 
 class Command(BaseCommand):
@@ -23,3 +23,4 @@ class Command(BaseCommand):
                 f"Checkpoint written: seq {last.seq}, hash {last.entry_hash[:16]} -> {target}"
             )
         )
+        self.stdout.write(checkpoint_status(str(target)))

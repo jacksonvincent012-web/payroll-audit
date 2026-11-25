@@ -5,12 +5,17 @@ from pathlib import Path
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from accounts.models import User
 from auditlog.models import AuditEntry
 from auditlog.services import record
-from core.checkpoint import load_checkpoint
+from core.checkpoint import (
+    checkpoint_status,
+    load_checkpoint,
+    load_checkpoint_record,
+    verify_checkpoint_signature,
+)
 from core.chain import verify
 from django.conf import settings
 from employees.forms import EmployeeForm
@@ -117,6 +122,32 @@ class CheckpointTests(TestCase):
         )
         self.assertFalse(ok)
         self.assertIn("truncat", reason.lower())
+
+    def test_signed_checkpoint_is_valid_after_export(self):
+        record(self.actor, "CREATE", "Employee", "E1", new={"name": "Ann"})
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "chain.json"
+            with override_settings(AUDIT_CHECKPOINT_PATH=str(path)):
+                call_command("export_checkpoint", "--path", str(path))
+                record_data = load_checkpoint_record(str(path))
+                self.assertIsNotNone(record_data)
+                self.assertTrue(record_data["signature"])
+                self.assertTrue(verify_checkpoint_signature(record_data))
+                self.assertIn("Signed checkpoint", checkpoint_status(str(path)))
+
+    def test_tampered_checkpoint_is_rejected(self):
+        record(self.actor, "CREATE", "Employee", "E2", new={"name": "Bob"})
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "chain.json"
+            with override_settings(AUDIT_CHECKPOINT_PATH=str(path)):
+                call_command("export_checkpoint", "--path", str(path))
+                import json
+
+                data = json.loads(path.read_text(encoding="utf-8"))
+                data["seq"] = 999
+                path.write_text(json.dumps(data), encoding="utf-8")
+                tampered = load_checkpoint_record(str(path))
+                self.assertFalse(verify_checkpoint_signature(tampered))
 
     def _export(self, entry):
         path = Path(tempfile.mkdtemp(prefix="checkpoint-")) / "chain.json"

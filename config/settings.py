@@ -172,6 +172,7 @@ AUDIT_HMAC_KEY = os.getenv("AUDIT_HMAC_KEY")
 AUDIT_CHECKPOINT_PATH = os.getenv(
     "AUDIT_CHECKPOINT_PATH", str(BASE_DIR / "checkpoint" / "chain.json")
 )
+CHECKPOINT_SIGNING_KEY = os.getenv("CHECKPOINT_SIGNING_KEY", "")
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"

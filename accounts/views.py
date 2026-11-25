@@ -12,7 +12,11 @@ from accounts.models import SUSResponse, UATParticipant
 from auditlog.models import AuditEntry
 from core.charts import chart_legend, donut_chart
 from core.chain import verify
-from core.checkpoint import load_checkpoint
+from core.checkpoint import (
+    load_checkpoint,
+    load_checkpoint_record,
+    verify_checkpoint_signature,
+)
 from expenses.models import Account, ExpenseClaim, LedgerEntry
 
 ZERO = Decimal("0.00")
@@ -151,6 +155,9 @@ def dashboard(request):
         settings.AUDIT_HMAC_KEY.encode(),
         checkpoint=load_checkpoint(),
     )
+    checkpoint_record = load_checkpoint_record()
+    if checkpoint_record and verify_checkpoint_signature(checkpoint_record) is False:
+        ok, reason = False, "checkpoint signature invalid"
 
     pending = ExpenseClaim.objects.filter(
         status__in=(ExpenseClaim.SUBMITTED, ExpenseClaim.PENDING_L2)

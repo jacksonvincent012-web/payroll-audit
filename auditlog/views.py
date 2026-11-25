@@ -5,7 +5,12 @@ from django.shortcuts import get_object_or_404, render
 from accounts.decorators import role_required
 from auditlog.models import AuditEntry
 from core.chain import verify
-from core.checkpoint import load_checkpoint
+from core.checkpoint import (
+    checkpoint_status,
+    load_checkpoint,
+    load_checkpoint_record,
+    verify_checkpoint_signature,
+)
 
 
 def _serialise(e):
@@ -29,6 +34,8 @@ def entry_list(request):
     entries = list(AuditEntry.objects.all())
 
     checkpoint = load_checkpoint()
+    record = load_checkpoint_record()
+    signature_ok = None if record is None else verify_checkpoint_signature(record)
     result = None
     if "verify" in request.GET:
         ok, reason = verify(
@@ -36,12 +43,19 @@ def entry_list(request):
             settings.AUDIT_HMAC_KEY.encode(),
             checkpoint=checkpoint,
         )
+        if signature_ok is False:
+            ok, reason = False, "checkpoint signature invalid"
         result = {"ok": ok, "reason": reason}
 
     return render(
         request,
         "auditlog/entry_list.html",
-        {"entries": entries, "result": result, "checkpoint": checkpoint},
+        {
+            "entries": entries,
+            "result": result,
+            "checkpoint": checkpoint,
+            "checkpoint_message": checkpoint_status(),
+        },
     )
 
 

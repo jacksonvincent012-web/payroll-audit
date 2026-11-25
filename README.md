@@ -149,9 +149,11 @@ a prompt for human review, not proof of wrongdoing.
 - Verification videos must be mp4/webm/mov with a video content type and at most
   20 MB (`employees/forms.py`).
 - `python manage.py export_checkpoint` writes the current chain head to
-  `checkpoint/chain.json` (git-ignored). Both the dashboard and the auditor view
-  verify against it, so deletion of the tail of the chain is detected. Point
-  `AUDIT_CHECKPOINT_PATH` at storage outside the application host in production.
+  `checkpoint/chain.json` (git-ignored). The file carries an HMAC signature made
+  with a separate `CHECKPOINT_SIGNING_KEY`, and both the dashboard and the
+  auditor view verify it, so tail deletion and checkpoint forgery are detected.
+  Point `AUDIT_CHECKPOINT_PATH` at storage outside the application host in
+  production.
 
 ## Expense control
 
