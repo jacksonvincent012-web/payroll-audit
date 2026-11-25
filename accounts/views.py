@@ -11,8 +11,16 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import role_required
-from accounts.forms import ParticipantForm, SUSForm
-from accounts.models import AppMessage, SUSResponse, UATParticipant
+from accounts.forms import AccessRequestForm, ParticipantForm, SUSForm
+from accounts.models import (
+    AccessRequest,
+    AppMessage,
+    Role,
+    SUSResponse,
+    UATParticipant,
+    UserRole,
+)
+from accounts.notifications import notify
 from auditlog.models import AuditEntry
 from core.charts import chart_legend, donut_chart
 from core.chain import verify
@@ -150,6 +158,274 @@ def _serialise(e):
         "prev_hash": e.prev_hash,
         "entry_hash": e.entry_hash,
     }
+
+
+def request_access(request):
+    """Public form for requesting a new portal account."""
+    if request.method == "POST":
+        form = AccessRequestForm(request.POST)
+        if form.is_valid():
+            access_request = form.save()
+            # Notify HR officers to verify
+            from accounts.notifications import notify_role
+            notify_role(
+                "HR_OFFICER",
+                f"New access request: {access_request.name}",
+                f"{access_request.name} ({access_request.email}) requested the "
+                f"{access_request.role_requested} role. Reason: {access_request.reason}. "
+                f"Please verify the information before forwarding.",
+                sender=None,
+            )
+            return render(
+                request,
+                "accounts/request_access.html",
+                {"form": AccessRequestForm(), "submitted": True},
+            )
+    else:
+        form = AccessRequestForm()
+    return render(
+        request, "accounts/request_access.html", {"form": form, "submitted": False}
+    )
+
+
+@login_required
+@role_required("HR_OFFICER", "ADMIN")
+def access_request_list(request):
+    if request.method == "POST":
+        access_request = get_object_or_404(
+            AccessRequest, pk=request.POST.get("request_id")
+        )
+        action = (request.POST.get("action") or "").upper()
+        from django.utils import timezone
+
+        if action == "VERIFY" and request.user.has_role("HR_OFFICER"):
+            if not (
+                request.POST.get("identity_confirmed")
+                and request.POST.get("role_justified")
+                and request.POST.get("no_conflict")
+            ):
+                messages.error(
+                    request,
+                    "All three checklist items must be confirmed before verification",
+                )
+                return redirect("accounts:access_request_list")
+            note = (request.POST.get("note") or "").strip()
+            if not note:
+                messages.error(request, "A verification note is required")
+                return redirect("accounts:access_request_list")
+
+            access_request.identity_confirmed = True
+            access_request.role_justified = True
+            access_request.no_conflict = True
+            access_request.verification_note = note
+            access_request.status = AccessRequest.PENDING_FORWARD
+            access_request.hr_verified_at = timezone.now()
+            access_request.hr_verified_by = request.user
+            access_request.save(
+                update_fields=[
+                    "identity_confirmed",
+                    "role_justified",
+                    "no_conflict",
+                    "verification_note",
+                    "status",
+                    "hr_verified_at",
+                    "hr_verified_by",
+                ]
+            )
+
+            # Notify head department (superusers) to forward to admin
+            from accounts.notifications import notify
+            for admin in get_user_model().objects.filter(is_superuser=True):
+                notify(
+                    admin,
+                    f"Access request verified by HR: {access_request.name}",
+                    f"{access_request.name} ({access_request.email}) verified by "
+                    f"{request.user.username}. Verification note: {note}. "
+                    f"Please forward to the administrator.",
+                    sender=request.user,
+                )
+            messages.success(request, f"Request verified - now pending head department forwarding")
+            return redirect("accounts:access_request_list")
+
+        # Escalation / objection (step 5)
+        if action == "ESCALATE" and request.user.has_role("HR_OFFICER"):
+            reason = (request.POST.get("reason") or "").strip()
+            if not reason:
+                messages.error(request, "A reason is required to escalate")
+                return redirect("accounts:access_request_list")
+            access_request.escalated = True
+            access_request.escalation_reason = reason
+            access_request.escalated_by = request.user
+            access_request.escalated_at = timezone.now()
+            access_request.status = AccessRequest.ESCALATED
+            access_request.save(
+                update_fields=[
+                    "escalated",
+                    "escalation_reason",
+                    "escalated_by",
+                    "escalated_at",
+                    "status",
+                ]
+            )
+            from accounts.notifications import notify
+            for admin in get_user_model().objects.filter(is_superuser=True):
+                notify(
+                    admin,
+                    f"ESCALATED: Access request for {access_request.name}",
+                    f"Request escalated by {request.user.username}: {reason}",
+                    sender=request.user,
+                )
+            messages.warning(request, f"Request escalated - blocked from approval")
+            return redirect("accounts:access_request_list")
+
+        # De-escalation
+        if action == "DEESCALATE" and request.user.is_superuser:
+            access_request.escalated = False
+            access_request.escalation_reason = ""
+            access_request.escalated_by = None
+            access_request.escalated_at = None
+            access_request.status = AccessRequest.PENDING_FORWARD
+            access_request.save(
+                update_fields=[
+                    "escalated",
+                    "escalation_reason",
+                    "escalated_by",
+                    "escalated_at",
+                    "status",
+                ]
+            )
+            messages.success(request, "Escalation cleared - request returned to forwarding")
+            return redirect("accounts:access_request_list")
+
+        # Head department forwards to admin
+        if action == "FORWARD" and request.user.has_role("HR_OFFICER"):
+            if not access_request.can_be_forwarded():
+                messages.error(request, "Request cannot be forwarded yet")
+                return redirect("accounts:access_request_list")
+            access_request.status = AccessRequest.PENDING_ADMIN
+            access_request.forwarded_at = timezone.now()
+            access_request.forwarded_by = request.user
+            access_request.save(
+                update_fields=["status", "forwarded_at", "forwarded_by"]
+            )
+            from accounts.notifications import notify
+            for admin in get_user_model().objects.filter(is_superuser=True):
+                notify(
+                    admin,
+                    f"Forwarded for decision: {access_request.name}",
+                    f"Request forwarded by {request.user.username}. "
+                    f"HR verification: {access_request.verification_note}. "
+                    f"Admin can decide after one working day.",
+                    sender=request.user,
+                )
+            messages.success(
+                request, f"Request forwarded to admin - 1 working day delay applies"
+            )
+            return redirect("accounts:access_request_list")
+
+        if action in ("APPROVE", "REJECT") and request.user.is_superuser:
+            if not access_request.can_be_decided():
+                if access_request.escalated:
+                    messages.error(request, "Request is escalated and cannot be decided")
+                elif not access_request.forwarded_at:
+                    messages.error(request, "Request must be forwarded by head department first")
+                else:
+                    remaining = access_request.working_day_remaining()
+                    messages.error(
+                        request,
+                        f"1 working day delay: approximately {int(remaining // 3600)}h "
+                        f"{int((remaining % 3600) // 60)}m remaining"
+                    )
+                return redirect("accounts:access_request_list")
+
+            temporary_password = None
+            if action == "APPROVE":
+                if access_request.status != AccessRequest.PENDING_ADMIN:
+                    messages.error(request, "Can only decide on HR-verified requests")
+                    return redirect("accounts:access_request_list")
+
+                import secrets
+
+                from django.core.mail import send_mail
+
+                username = (
+                    access_request.staff_no or access_request.email.split("@")[0]
+                ).strip()
+                if get_user_model().objects.filter(username=username).exists():
+                        messages.error(
+                            request,
+                            f"Username {username} already exists — no account was created",
+                        )
+                        return redirect("accounts:access_request_list")
+                temporary_password = secrets.token_urlsafe(9)
+                names = access_request.name.split()
+                user = get_user_model().objects.create_user(
+                        username=username,
+                        email=access_request.email,
+                        password=temporary_password,
+                        first_name=names[0] if names else "",
+                        last_name=" ".join(names[1:]) if len(names) > 1 else "",
+                    )
+                role = Role.objects.filter(code=access_request.role_requested).first()
+                if role:
+                    UserRole.objects.create(user=user, role=role)
+                    send_mail(
+                        "Your Payroll Audit portal account",
+                        f"Username: {username}\nTemporary password: {temporary_password}\n"
+                        "Please change your password after signing in.",
+                        settings.DEFAULT_FROM_EMAIL,
+                        [access_request.email],
+                        fail_silently=True,
+                    )
+
+            access_request.status = (
+                AccessRequest.APPROVED
+                if action == "APPROVE"
+                else AccessRequest.REJECTED
+            )
+            access_request.decided_at = timezone.now()
+            access_request.decided_by = request.user
+            access_request.decision_note = (
+                f"HR verification by {access_request.hr_verified_by.username}: "
+                f"{access_request.verification_note}"
+            )
+            access_request.save(
+                update_fields=[
+                    "status",
+                    "decided_at",
+                    "decided_by",
+                    "decision_note",
+                ]
+            )
+            if temporary_password:
+                messages.success(
+                    request,
+                    f"Account created for {access_request.name}. "
+                    f"Temporary password: {temporary_password}",
+                )
+            else:
+                messages.success(request, f"Request {action.lower()}d")
+        return redirect("accounts:access_request_list")
+
+    # Filter requests based on user role
+    if request.user.is_superuser:
+        requests = AccessRequest.objects.all()
+    elif request.user.has_role("HR_OFFICER"):
+        requests = AccessRequest.objects.filter(
+            status__in=[
+                AccessRequest.PENDING_HR,
+                AccessRequest.PENDING_FORWARD,
+                AccessRequest.PENDING_ADMIN,
+                AccessRequest.ESCALATED,
+                AccessRequest.APPROVED,
+                AccessRequest.REJECTED,
+            ]
+        )
+    else:
+        requests = AccessRequest.objects.none()
+    return render(
+        request, "accounts/access_request_list.html", {"requests": requests}
+    )
 
 
 @login_required

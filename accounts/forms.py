@@ -1,6 +1,6 @@
 from django import forms
 
-from accounts.models import SUSResponse, UATParticipant
+from accounts.models import AccessRequest, SUSResponse, UATParticipant
 
 SUS_QUESTIONS = (
     "I think that I would like to use this system frequently.",
@@ -22,6 +22,13 @@ LIKERT = (
     (4, "4 - Agree"),
     (5, "5 - Strongly agree"),
 )
+
+
+class AccessRequestForm(forms.ModelForm):
+    class Meta:
+        model = AccessRequest
+        fields = ["name", "email", "staff_no", "role_requested", "reason"]
+        widgets = {"reason": forms.Textarea(attrs={"rows": 4})}
 
 
 class ParticipantForm(forms.ModelForm):

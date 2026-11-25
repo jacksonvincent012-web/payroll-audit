@@ -17,11 +17,13 @@
             </thead>
             <tbody>
                 {% for message in inbox %}
-                    <tr style="{% if message.is_unread %}font-weight:600;{% endif %}">
+                    <tr class="{{ message.is_unread|yesno:'updated-unread,' }}">
                         <td style="white-space:nowrap;font-weight:400;">{{ message.created_at|date:"Y-m-d H:i" }}</td>
                         <td>
                             {{ message.subject }}<br>
-                            <span style="font-size:0.82rem;font-weight:400;color:var(--updated-muted);">{{ message.body }}</span>
+                            <span style="font-size:0.82rem;font-weight:400;color:var(--updated-muted);">
+                                {{ message.body|linebreaksbr }}
+                            </span>
                         </td>
                         <td>{{ message.sender.username|default:"System" }}</td>
                         <td>
@@ -30,7 +32,7 @@
                         </td>
                         <td style="text-align:right;">
                             {% if message.is_unread %}
-                                <form method="post">
+                                <form method="post" style="display:inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="message_id" value="{{ message.pk }}">
                                     <button type="submit" class="updated-btn updated-btn--ghost" style="padding:4px 10px;font-size:0.75rem;">Mark read</button>

@@ -153,6 +153,7 @@ AUTH_USER_MODEL = "accounts.User"
 AUTHENTICATION_BACKENDS = ("accounts.backends.RateLimitedBackend",)
 LOGIN_FAIL_LIMIT = 5
 LOGIN_FAIL_WINDOW = 900
+ACCESS_DECISION_DELAY_HOURS = 24
 
 
 # Email

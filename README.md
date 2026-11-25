@@ -156,6 +156,12 @@ identity header, a "Registered Staff" panel with helper text under each field
 and a note about confusable digits and letters, a "New Users" panel for access
 requests, and a university footer.
 
+**Request access** opens a real form at `/request-access/` that records the
+request and confirms submission; superusers receive an in-app message. An
+administrator reviews requests at `/access-requests/`. Approving creates the
+user account with the requested role, emails a temporary password, and shows it
+once to the administrator; rejecting simply records the decision.
+
 ## Messages
 
 Every user has an in-app message centre at `/messages/` with an unread badge in

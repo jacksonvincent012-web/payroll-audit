@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Request access{% endblock %}
+{% block nav %}{% endblock %}
+
+{% block content %}
+<div style="max-width:560px;margin:32px auto 0;">
+    <div style="text-align:center;margin-bottom:22px;">
+        <img src="{% static 'img/logo.jpeg' %}" alt="Mount Kenya University" style="height:72px;width:auto;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.14);margin-bottom:12px;">
+        <h1 style="margin:0 0 4px;color:var(--updated-blue);font-size:1.35rem;">MOUNT KENYA UNIVERSITY</h1>
+        <p style="margin:0;color:var(--updated-muted);font-size:0.88rem;">Payroll Audit &amp; Resource Verification System</p>
+    </div>
+
+    {% if submitted %}
+        <div class="updated-surface" style="padding:28px;text-align:center;">
+            <p class="updated-eyebrow">Request submitted</p>
+            <h1 class="updated-title">Thank you</h1>
+            <p class="updated-lead">Your access request has been recorded. An administrator will review it and respond to your email address.</p>
+            <div style="margin-top:18px;">
+                <a class="updated-btn updated-btn--primary" href="{% url 'login' %}">Back to sign in</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="updated-surface" style="padding:26px;">
+            <p style="margin:0 0 4px;color:var(--updated-blue);font-size:1.05rem;font-weight:700;">New Users</p>
+            <p style="margin:0 0 18px;color:var(--updated-muted);font-size:0.86rem;">Complete the form to request a portal account.</p>
+
+            <form method="post" style="display:grid;gap:14px;">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="updated-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}
+                            <span style="display:block;margin-top:4px;font-size:0.78rem;color:#dc2626;">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="updated-btn updated-btn--primary" style="width:100%;margin-top:6px;">Submit request</button>
+            </form>
+        </div>
+    {% endif %}
+
+    <p style="text-align:center;margin-top:18px;color:var(--updated-muted);font-size:0.78rem;">
+        © 2026 Mount Kenya University &middot; BBIT Final-Year Project
+    </p>
+</div>
+{% endblock %}

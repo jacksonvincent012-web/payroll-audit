@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Access requests{% endblock %}
+
+{% block content %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Administration</p>
+    <h1 class="updated-title">Access requests</h1>
+    <p class="updated-lead">{{ requests|length }} request(s) &middot; new users asking for a portal account</p>
+</section>
+
+<section class="updated-surface">
+    <div class="updated-table-wrap">
+        <table class="updated-table">
+            <thead>
+                <tr><th>Name</th><th>Email</th><th>Staff no</th><th>Role</th><th>Reason</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for item in requests %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.email }}</td>
+                        <td style="font-family:monospace;">{{ item.staff_no|default:"—" }}</td>
+                        <td>{{ item.role_requested }}</td>
+                        <td>{{ item.reason }}</td>
+                        <td>
+                            {% if item.status == 'PENDING_HR' %}<span style="color:#d97706;font-weight:600;">Pending HR</span>
+                            {% elif item.status == 'PENDING_FORWARD' %}<span style="color:#7c3aed;font-weight:600;">Pending forwarding</span>
+                            {% elif item.status == 'PENDING_ADMIN' %}<span style="color:#2563eb;font-weight:600;">Pending Admin</span>
+                            {% elif item.status == 'ESCALATED' %}<span style="color:#dc2626;font-weight:600;">Escalated</span>
+                            {% elif item.status == 'APPROVED' %}<span style="color:#16a34a;font-weight:600;">Approved</span>
+                            {% else %}<span style="color:#dc2626;font-weight:600;">Rejected</span>{% endif %}
+                        </td>
+                        <td style="text-align:right;white-space:nowrap;">
+                            {% if item.status == 'PENDING_HR' and user.is_hr_officer %}
+                                <form method="post" style="display:inline-flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="request_id" value="{{ item.pk }}">
+                                    <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;">
+                                        <input type="checkbox" name="identity_confirmed" value="1"> Identity confirmed
+                                    </label>
+                                    <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;">
+                                        <input type="checkbox" name="role_justified" value="1"> Role justified
+                                    </label>
+                                    <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;">
+                                        <input type="checkbox" name="no_conflict" value="1"> No conflict
+                                    </label>
+                                    <input class="updated-input" name="note" placeholder="Verification note" required style="max-width:180px;font-size:0.8rem;">
+                                    <button type="submit" name="action" value="VERIFY" class="updated-btn updated-btn--primary" style="padding:4px 10px;font-size:0.75rem;">Verify</button>
+                                    <input class="updated-input" name="reason" placeholder="Escalation reason" style="max-width:180px;font-size:0.8rem;">
+                                    <button type="submit" name="action" value="ESCALATE" class="updated-btn updated-btn--ghost" style="padding:4px 10px;font-size:0.75rem;color:#dc2626;">Escalate</button>
+                                </form>
+                            {% elif item.status == 'PENDING_FORWARD' and user.is_hr_officer %}
+                                <form method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="request_id" value="{{ item.pk }}">
+                                    <input type="hidden" name="action" value="FORWARD">
+                                    <button type="submit" class="updated-btn updated-btn--primary" style="padding:4px 10px;font-size:0.75rem;">Forward to admin</button>
+                                </form>
+                            {% elif item.status == 'PENDING_ADMIN' and user.is_superuser %}
+                                <form method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="request_id" value="{{ item.pk }}">
+                                    <input type="hidden" name="action" value="APPROVE">
+                                    <button type="submit" class="updated-btn updated-btn--primary" style="padding:4px 10px;font-size:0.75rem;">Approve</button>
+                                </form>
+                                <form method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="request_id" value="{{ item.pk }}">
+                                    <input type="hidden" name="action" value="REJECT">
+                                    <button type="submit" class="updated-btn updated-btn--ghost" style="padding:4px 10px;font-size:0.75rem;">Reject</button>
+                                </form>
+                                {% if item.working_day_remaining %}
+                                    <br><span style="font-size:0.75rem;color:var(--updated-muted);">
+                                        Delay: ~{{ item.working_day_remaining|floatformat:"0" }}s remaining
+                                    </span>
+                                {% endif %}
+                            {% elif item.status == 'ESCALATED' and user.is_superuser %}
+                                <form method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="request_id" value="{{ item.pk }}">
+                                    <input type="hidden" name="action" value="DEESCALATE">
+                                    <button type="submit" class="updated-btn updated-btn--ghost" style="padding:4px 10px;font-size:0.75rem;">Clear escalation</button>
+                                </form>
+                            {% else %}
+                                by {{ item.decided_by.username|default:"System" }} &middot; {{ item.decided_at|date:"Y-m-d H:i" }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7">No access requests yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

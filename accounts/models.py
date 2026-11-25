@@ -84,6 +84,122 @@ class UserRole(models.Model):
         return f"{self.user.username}: {self.role.code}"
 
 
+class AccessRequest(models.Model):
+    """A request from a new user asking for a portal account."""
+
+    PENDING_HR = "PENDING_HR"
+    PENDING_FORWARD = "PENDING_FORWARD"
+    PENDING_ADMIN = "PENDING_ADMIN"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    ESCALATED = "ESCALATED"
+    STATUS_CHOICES = (
+        (PENDING_HR, "Pending HR verification"),
+        (PENDING_FORWARD, "Pending head-dept forwarding"),
+        (PENDING_ADMIN, "Pending admin decision"),
+        (APPROVED, "Approved"),
+        (REJECTED, "Rejected"),
+        (ESCALATED, "Escalated - under review"),
+    )
+
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    staff_no = models.CharField(max_length=20, blank=True)
+    role_requested = models.CharField(max_length=30)
+    reason = models.TextField()
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=PENDING_HR)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    # HR verification (step 3: checklist + note)
+    identity_confirmed = models.BooleanField(default=False)
+    role_justified = models.BooleanField(default=False)
+    no_conflict = models.BooleanField(default=False)
+    verification_note = models.TextField(blank=True)
+    hr_verified_at = models.DateTimeField(null=True, blank=True)
+    hr_verified_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="hr_verified_requests",
+    )
+
+    # Escalation / objection (step 5)
+    escalated = models.BooleanField(default=False)
+    escalation_reason = models.TextField(blank=True)
+    escalated_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="escalated_requests",
+    )
+    escalated_at = models.DateTimeField(null=True, blank=True)
+
+    # Head department forwarding
+    forwarded_at = models.DateTimeField(null=True, blank=True)
+    forwarded_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="forwarded_requests",
+    )
+
+    # Admin decision (step 4 delay + step 6 counter-signature)
+    decided_at = models.DateTimeField(null=True, blank=True)
+    decided_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="decided_access_requests",
+    )
+    decision_note = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.name} ({self.role_requested}) - {self.status}"
+
+    def hr_checklist_complete(self):
+        return self.identity_confirmed and self.role_justified and self.no_conflict
+
+    def can_be_forwarded(self):
+        return (
+            self.status == self.PENDING_FORWARD
+            or (self.status == self.PENDING_HR and self.hr_checklist_complete())
+        )
+
+    def can_be_decided(self):
+        if self.status != self.PENDING_ADMIN:
+            return False
+        if self.escalated:
+            return False
+        if not self.forwarded_at:
+            return False
+        # Configurable delay (1 working day in production, 0 in tests)
+        from django.conf import settings
+        from datetime import timedelta
+
+        delay_hours = getattr(settings, "ACCESS_DECISION_DELAY_HOURS", 24)
+        if delay_hours <= 0:
+            return True
+        # 1 working day delay
+        earliest = self._add_working_day(self.forwarded_at)
+        from django.utils import timezone as tz
+
+        return tz.now() >= earliest
+
+    def _add_working_day(self, dt):
+        from datetime import timedelta
+
+        day = dt
+        while True:
+            day = day + timedelta(days=1)
+            if day.weekday() < 5:  # Monday=0 ... Friday=4
+                break
+        return day
+
+    def working_day_remaining(self):
+        if not self.forwarded_at or self.can_be_decided():
+            return None
+        from datetime import timedelta
+
+        earliest = self._add_working_day(self.forwarded_at)
+        remaining = earliest - timezone.now()
+        return max(remaining.total_seconds(), 0)
+
+
 class AppMessage(models.Model):
     """An internal notification shown in the user's message centre."""
 
