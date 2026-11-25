@@ -22,6 +22,7 @@ balance.
 | `auditlog` | Append-only, hash-chained audit trail |
 | `core` | Audit chain helpers, email helpers |
 
+
 ## Roles
 
 `HR_OFFICER`, `APPROVER`, `AUDITOR`, `ACCOUNTANT`, `ADMIN`.
@@ -147,6 +148,13 @@ The employee register and claims list include search boxes, and the claims list
 keeps the search term when switching status filters. Approvals, rejections,
 employee saves, imports and alert clearing now show a success or error message
 on the next page instead of redirecting silently.
+
+## Sign-in
+
+The sign-in page follows the structure of the MKU student portal: a portal
+identity header, a "Registered Staff" panel with helper text under each field
+and a note about confusable digits and letters, a "New Users" panel for access
+requests, and a university footer.
 
 ## Messages
 

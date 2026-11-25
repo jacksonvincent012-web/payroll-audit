@@ -94,6 +94,29 @@ class ClaimFeedbackTests(TestCase):
         self.assertContains(response, "CLM-UI")
 
 
+class LoginStructureTests(TestCase):
+    def test_mku_style_login_layout(self):
+        response = self.client.get("/accounts/login/")
+        self.assertEqual(response.status_code, 200)
+        for marker in (
+            "MOUNT KENYA UNIVERSITY",
+            "Staff Portal",
+            "Registered Staff",
+            "New Users",
+            "Request access",
+            "Staff ID / Username",
+        ):
+            self.assertContains(response, marker)
+
+    def test_signin_still_works(self):
+        User.objects.create_user(username="loginuser", password="Pass#12345")
+        response = self.client.post(
+            "/accounts/login/",
+            {"username": "loginuser", "password": "Pass#12345"},
+        )
+        self.assertEqual(response.status_code, 302)
+
+
 class LedgerViewTests(TestCase):
     def setUp(self):
         self.user = make_user("ledger", "ACCOUNTANT")
