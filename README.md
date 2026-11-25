@@ -137,6 +137,12 @@ on payroll with no attendance in that period (MEDIUM). Alerts are reviewed at
 `/employees/alerts/`; clearing one requires a reason and is audited. A flag is
 a prompt for human review, not proof of wrongdoing.
 
+## Operations
+
+- `GET /health/` returns a JSON liveness check with record counts.
+- `python manage.py export_uat_results [--path evidence/uat_results.csv]`
+  writes completed SUS responses to CSV for the Chapter 5 evidence pack.
+
 ## Security hardening
 
 - `config/settings_production.py` gives secure deployment defaults: `DEBUG=False`,

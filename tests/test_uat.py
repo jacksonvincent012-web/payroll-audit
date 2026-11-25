@@ -1,3 +1,7 @@
+import tempfile
+from pathlib import Path
+
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
@@ -96,3 +100,29 @@ class UATFlowTests(TestCase):
         response = self.client.get(reverse("accounts:uat_results"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "benchmark 68")
+
+
+class HealthAndExportTests(TestCase):
+    def test_health_endpoint_reports_ok(self):
+        response = self.client.get("/health/")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "ok")
+        self.assertIn("audit_entries", payload)
+
+    def test_health_rejects_post(self):
+        self.assertEqual(self.client.post("/health/").status_code, 405)
+
+    def test_export_results_to_csv(self):
+        participant = UATParticipant.objects.create(
+            code="P09", role_tested="HR_OFFICER"
+        )
+        SUSResponse.objects.create(
+            participant=participant, **{f"q{i}": 4 for i in range(1, 11)}
+        )
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "results.csv"
+            call_command("export_uat_results", "--path", str(path))
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("P09", text)
+            self.assertIn("score", text)

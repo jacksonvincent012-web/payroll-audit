@@ -4,7 +4,10 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+
+from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import role_required
 from accounts.forms import ParticipantForm, SUSForm
@@ -17,6 +20,7 @@ from core.checkpoint import (
     load_checkpoint_record,
     verify_checkpoint_signature,
 )
+from employees.models import Employee
 from expenses.models import Account, ExpenseClaim, LedgerEntry
 
 ZERO = Decimal("0.00")
@@ -145,6 +149,24 @@ def _serialise(e):
         "prev_hash": e.prev_hash,
         "entry_hash": e.entry_hash,
     }
+
+
+@require_http_methods(["GET"])
+def health(request):
+    """Lightweight liveness check used by monitoring and the local harness."""
+    from django.db import connection
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 1")
+    return JsonResponse(
+        {
+            "status": "ok",
+            "users": get_user_model().objects.count(),
+            "employees": Employee.objects.count(),
+            "claims": ExpenseClaim.objects.count(),
+            "audit_entries": AuditEntry.objects.count(),
+        }
+    )
 
 
 @login_required
