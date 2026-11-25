@@ -2,7 +2,9 @@ from typing import ClassVar
 
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class Role(models.Model):
@@ -80,3 +82,45 @@ class UserRole(models.Model):
 
     def __str__(self):
         return f"{self.user.username}: {self.role.code}"
+
+
+class UATParticipant(models.Model):
+    """An anonymised participant in user acceptance testing."""
+
+    code = models.CharField(max_length=20, unique=True)
+    role_tested = models.CharField(max_length=30)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.code} ({self.role_tested})"
+
+
+class SUSResponse(models.Model):
+    """A completed ten-item System Usability Scale questionnaire."""
+
+    participant = models.OneToOneField(
+        UATParticipant, on_delete=models.PROTECT, related_name="sus"
+    )
+    q1 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    q2 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    q3 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    q4 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    q5 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    q6 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    q7 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    q8 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    q9 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    q10 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    comment = models.TextField(blank=True)
+    completed_at = models.DateTimeField(default=timezone.now)
+
+    @property
+    def score(self):
+        total = 0
+        for number in range(1, 11):
+            answer = getattr(self, f"q{number}")
+            total += answer - 1 if number % 2 else 5 - answer
+        return round(total * 2.5, 2)
+
+    def __str__(self):
+        return f"{self.participant.code}: {self.score}"

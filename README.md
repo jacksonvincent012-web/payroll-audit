@@ -111,6 +111,17 @@ The landing page is role-aware:
 - **Other roles** — a slicer dropdown filters recent activity by entity type.
   Money totals are not exposed to non-superusers.
 
+## User acceptance testing
+
+`/uat/` presents role-specific task scripts and a ten-item System Usability
+Scale questionnaire. Participants register with an anonymous code, complete the
+form, and an auditor or administrator reviews the mean score and per-role
+breakdown at `/uat/results/`. Scoring follows the standard SUS formula
+(odd items: response − 1; even items: 5 − response; total × 2.5), with 68 as the
+benchmark. A printable task pack is provided in
+`Payroll_Audit_UAT_Pack.docx`. Real participant responses have not yet been
+collected, so no score is claimed in the report.
+
 ## Employee verification
 
 Employee records carry bank account and phone fields, normalised into indexed

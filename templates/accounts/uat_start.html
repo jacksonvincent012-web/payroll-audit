@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}User acceptance testing{% endblock %}
+
+{% block content %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Evaluation</p>
+    <h1 class="updated-title">User acceptance testing</h1>
+    <p class="updated-lead">Complete the tasks for your role, then answer the ten usability questions. Responses use an anonymised participant code — no personal data is stored.</p>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+        <a class="updated-btn updated-btn--primary" href="{% url 'accounts:uat_participant' %}">Register as a participant</a>
+        <a class="updated-btn updated-btn--ghost" href="{% url 'accounts:uat_results' %}">View results</a>
+    </div>
+</section>
+
+{% for role, tasks in tasks.items %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">{{ role|cut:"_" }}</p>
+    <ol style="margin:0;padding-left:20px;color:var(--updated-muted);line-height:1.9;font-size:0.92rem;">
+        {% for task in tasks %}<li>{{ task }}</li>{% endfor %}
+    </ol>
+</section>
+{% endfor %}
+{% endblock %}

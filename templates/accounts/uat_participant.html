@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Register participant{% endblock %}
+
+{% block content %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Evaluation</p>
+    <h1 class="updated-title">Register as a participant</h1>
+    <p class="updated-lead">Use a code such as P01, P02 — do not enter your name.</p>
+    <form method="post" style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        {% csrf_token %}
+        <div class="updated-field"><label for="{{ form.code.id_for_label }}">Participant code</label>{{ form.code }}</div>
+        <div class="updated-field"><label for="{{ form.role_tested.id_for_label }}">Role tested</label>{{ form.role_tested }}</div>
+        <button type="submit" class="updated-btn updated-btn--primary">Start questionnaire</button>
+    </form>
+    {% for field in form %}
+        {% for error in field.errors %}<p class="updated-alert" style="margin-top:8px;">{{ field.label }}: {{ error }}</p>{% endfor %}
+    {% endfor %}
+</section>
+{% endblock %}

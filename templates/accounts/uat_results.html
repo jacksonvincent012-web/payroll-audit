@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}UAT results{% endblock %}
+
+{% block content %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Evaluation</p>
+    <h1 class="updated-title">Usability results</h1>
+    <p class="updated-lead">
+        {% if average %}
+            Mean SUS score <strong style="color:#16a34a;">{{ average }}</strong> / 100 &middot; {{ responses|length }} response(s)
+        {% else %}
+            No responses recorded yet.
+        {% endif %}
+        &middot; benchmark 68
+    </p>
+</section>
+
+{% if by_role %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">By role</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
+            <thead><tr><th>Role tested</th><th style="text-align:right;">Mean SUS</th><th>Against benchmark</th></tr></thead>
+            <tbody>
+                {% for role, score in by_role.items %}
+                    <tr>
+                        <td>{{ role }}</td>
+                        <td style="text-align:right;font-family:monospace;">{{ score }}</td>
+                        <td style="font-weight:600;color:{% if score >= 68 %}#16a34a{% else %}#d97706{% endif %};">{% if score >= 68 %}Above{% else %}Below{% endif %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+<section class="updated-surface">
+    <p class="updated-eyebrow">Responses</p>
+    <div class="updated-table-wrap">
+        <table class="updated-table">
+            <thead><tr><th>Code</th><th>Role</th><th style="text-align:right;">Score</th><th>Comment</th><th>When</th></tr></thead>
+            <tbody>
+                {% for response in responses %}
+                    <tr>
+                        <td style="font-family:monospace;">{{ response.participant.code }}</td>
+                        <td>{{ response.participant.role_tested }}</td>
+                        <td style="text-align:right;font-family:monospace;">{{ response.score }}</td>
+                        <td>{{ response.comment|default:"—" }}</td>
+                        <td style="white-space:nowrap;">{{ response.completed_at|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5">No responses yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Thank you{% endblock %}
+
+{% block content %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Evaluation</p>
+    <h1 class="updated-title">{% if already %}Already submitted{% else %}Thank you{% endif %}</h1>
+    {% if response %}
+        <p class="updated-lead">Participant {{ participant.code }} &middot; SUS score <strong style="color:#16a34a;">{{ response.score }}</strong> / 100.</p>
+    {% else %}
+        <p class="updated-lead">Participant {{ participant.code }} has already completed the questionnaire.</p>
+    {% endif %}
+    <div style="margin-top:14px;">
+        <a class="updated-btn updated-btn--ghost" href="{% url 'accounts:uat_start' %}">Back to testing tasks</a>
+    </div>
+</section>
+{% endblock %}

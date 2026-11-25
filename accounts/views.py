@@ -4,8 +4,11 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
 
+from accounts.decorators import role_required
+from accounts.forms import ParticipantForm, SUSForm
+from accounts.models import SUSResponse, UATParticipant
 from auditlog.models import AuditEntry
 from core.charts import chart_legend, donut_chart
 from core.chain import verify
@@ -195,3 +198,103 @@ def dashboard(request):
         context["money"] = money
         context["chart"] = money["charts"][view_choice]
     return render(request, "accounts/dashboard.html", context)
+
+
+UAT_TASKS = {
+    "HR_OFFICER": (
+        "Open the employee register and find a staff number.",
+        "Add an employee with a bank account and phone, then open the detail page.",
+        "Confirm the audit history shows the CREATE entry.",
+        "Open Verification alerts and read one flag without clearing it.",
+    ),
+    "APPROVER": (
+        "Open All claims and find a submitted claim that is not your own.",
+        "Approve a claim below KES 100,000 and confirm the ledger totals update.",
+        "Try to approve your own claim and confirm the system refuses.",
+        "Open Verification alerts and clear one alert with a reason.",
+    ),
+    "AUDITOR": (
+        "Open the audit trail and verify integrity.",
+        "Confirm the external checkpoint is displayed.",
+        "Open an entry detail and read its hash and linked previous hash.",
+        "Open an employee detail page and confirm the video and audit history.",
+    ),
+    "ADMIN": (
+        "Open the dashboard money summary and its reconciliation checks.",
+        "Switch the breakdown dropdown between category, account and reconciliation.",
+        "Open the chart of accounts and confirm debits equal credits.",
+    ),
+}
+
+
+@login_required
+def uat_start(request):
+    return render(request, "accounts/uat_start.html", {"tasks": UAT_TASKS})
+
+
+@login_required
+def uat_participant(request):
+    if request.method == "POST":
+        form = ParticipantForm(request.POST)
+        if form.is_valid():
+            participant = form.save()
+            return redirect("accounts:uat_sus", pk=participant.pk)
+    else:
+        form = ParticipantForm()
+    return render(request, "accounts/uat_participant.html", {"form": form})
+
+
+@login_required
+def uat_sus(request, pk):
+    participant = get_object_or_404(UATParticipant, pk=pk)
+    if SUSResponse.objects.filter(participant=participant).exists():
+        return render(
+            request,
+            "accounts/uat_done.html",
+            {"participant": participant, "already": True},
+        )
+    if request.method == "POST":
+        form = SUSForm(request.POST)
+        if form.is_valid():
+            response = form.save(commit=False)
+            response.participant = participant
+            response.save()
+            return render(
+                request,
+                "accounts/uat_done.html",
+                {"participant": participant, "response": response, "already": False},
+            )
+    else:
+        form = SUSForm()
+    return render(
+        request,
+        "accounts/uat_sus.html",
+        {"form": form, "participant": participant},
+    )
+
+
+@login_required
+@role_required("AUDITOR", "ADMIN")
+def uat_results(request):
+    responses = list(
+        SUSResponse.objects.select_related("participant").order_by("-completed_at")
+    )
+    scores = [response.score for response in responses]
+    average = round(sum(scores) / len(scores), 2) if scores else None
+    grouped = {}
+    for response in responses:
+        grouped.setdefault(response.participant.role_tested, []).append(response.score)
+    by_role = {
+        role: round(sum(values) / len(values), 2)
+        for role, values in grouped.items()
+    }
+    return render(
+        request,
+        "accounts/uat_results.html",
+        {
+            "responses": responses,
+            "average": average,
+            "by_role": by_role,
+            "benchmark": 68,
+        },
+    )

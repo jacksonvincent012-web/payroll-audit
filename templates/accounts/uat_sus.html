@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}System Usability Scale{% endblock %}
+
+{% block content %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Evaluation</p>
+    <h1 class="updated-title">System Usability Scale</h1>
+    <p class="updated-lead">Participant {{ participant.code }} &middot; role {{ participant.role_tested }} &middot; answer all ten items.</p>
+    <form method="post" style="margin-top:16px;">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="updated-field" style="margin-bottom:14px;">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+            </div>
+        {% endfor %}
+        <button type="submit" class="updated-btn updated-btn--primary">Submit responses</button>
+    </form>
+    {% for field in form %}
+        {% for error in field.errors %}<p class="updated-alert">{{ field.label }}: {{ error }}</p>{% endfor %}
+    {% endfor %}
+</section>
+{% endblock %}
