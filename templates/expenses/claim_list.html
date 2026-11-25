@@ -10,10 +10,15 @@
 </section>
 
 <section class="updated-surface">
+    <form method="get" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+        <input type="hidden" name="status" value="{{ status }}">
+        <input class="updated-input" type="search" name="q" value="{{ query }}" placeholder="Search reference, description, claimant or category" style="max-width:380px;">
+        <button type="submit" class="updated-btn updated-btn--ghost">Search</button>
+    </form>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
-        <a class="updated-btn {% if not status %}updated-btn--primary{% else %}updated-btn--ghost{% endif %}" style="padding:6px 12px;font-size:0.8rem;" href="{% url 'expenses:claim_list' %}">All</a>
+        <a class="updated-btn {% if not status %}updated-btn--primary{% else %}updated-btn--ghost{% endif %}" style="padding:6px 12px;font-size:0.8rem;" href="{% url 'expenses:claim_list' %}?q={{ query|urlencode }}">All</a>
         {% for code, label in statuses %}
-            <a class="updated-btn {% if status == code %}updated-btn--primary{% else %}updated-btn--ghost{% endif %}" style="padding:6px 12px;font-size:0.8rem;" href="?status={{ code }}">{{ label }}</a>
+            <a class="updated-btn {% if status == code %}updated-btn--primary{% else %}updated-btn--ghost{% endif %}" style="padding:6px 12px;font-size:0.8rem;" href="?status={{ code }}&q={{ query|urlencode }}">{{ label }}</a>
         {% endfor %}
     </div>
 

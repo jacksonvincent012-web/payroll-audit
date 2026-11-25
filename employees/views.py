@@ -2,7 +2,9 @@ from django.core.exceptions import PermissionDenied
 import json
 import mimetypes
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -38,10 +40,25 @@ AUDIT_ROLES = ("AUDITOR", "ADMIN")
 def employee_list(request):
     user = request.user
     can_edit = user.has_role("HR_OFFICER")
+    query = (request.GET.get("q") or "").strip()
+    employees = Employee.objects.all()
+    if query:
+        employees = employees.filter(
+            Q(staff_no__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(department__icontains=query)
+            | Q(job_title__icontains=query)
+        )
     return render(
         request,
         "employees/employee_list.html",
-        {"employees": Employee.objects.all(), "can_edit": can_edit},
+        {
+            "employees": employees,
+            "can_edit": can_edit,
+            "query": query,
+            "new_only": False,
+        },
     )
 
 
@@ -93,7 +110,8 @@ def employee_create(request):
         raise PermissionDenied
     form = EmployeeForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
-        create_employee(request.user, **form.cleaned_data)
+        employee = create_employee(request.user, **form.cleaned_data)
+        messages.success(request, f"Employee {employee.staff_no} created")
         return redirect("employees:employee_list")
     return render(
         request,
@@ -110,6 +128,7 @@ def employee_edit(request, pk):
     form = EmployeeForm(request.POST or None, instance=employee)
     if request.method == "POST" and form.is_valid():
         update_employee(request.user, employee, **form.cleaned_data)
+        messages.success(request, f"Employee {employee.staff_no} updated")
         return redirect("employees:employee_list")
     return render(
         request,
@@ -171,7 +190,8 @@ def attendance_import(request):
         form = AttendanceUploadForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                import_attendance(request.user, form.cleaned_data["csv_file"])
+                batch = import_attendance(request.user, form.cleaned_data["csv_file"])
+                messages.success(request, f"Imported {batch.row_count} attendance rows")
             except (ValueError, UnicodeDecodeError) as exc:
                 form.add_error(None, str(exc))
             else:
@@ -197,7 +217,8 @@ def payroll_import(request):
         if form.is_valid():
             period = form.cleaned_data["period"]
             try:
-                import_payroll(request.user, form.cleaned_data["csv_file"], period)
+                count = import_payroll(request.user, form.cleaned_data["csv_file"], period)
+                messages.success(request, f"Imported {count} payroll lines for {period}")
             except (ValueError, UnicodeDecodeError) as exc:
                 form.add_error(None, str(exc))
             else:
@@ -220,9 +241,10 @@ def verification_alerts(request):
     if request.method == "POST":
         alert = get_object_or_404(Alert, pk=request.POST.get("alert_id"))
         try:
-            clear_alert(request.user, alert, request.POST.get("reason", ""))
-        except ClaimError:
-            pass
+            cleared = clear_alert(request.user, alert, request.POST.get("reason", ""))
+            messages.success(request, f"Alert on {cleared.employee.staff_no} cleared")
+        except ClaimError as exc:
+            messages.error(request, str(exc))
         return redirect("employees:verification_alerts")
 
     alerts = (

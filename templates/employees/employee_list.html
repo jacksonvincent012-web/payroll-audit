@@ -7,6 +7,11 @@
     <p class="updated-eyebrow">Employees</p>
     <h1 class="updated-title">{% if new_only %}New employees{% else %}Staff register{% endif %}</h1>
     <p class="updated-lead">{% if new_only %}Newly added staff &middot; {% endif %}{{ employees|length }} records &middot; every change is written to the audit chain</p>
+    <form method="get" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <input class="updated-input" type="search" name="q" value="{{ query }}" placeholder="Search staff no, name, department or job title" style="max-width:380px;">
+        <button type="submit" class="updated-btn updated-btn--ghost">Search</button>
+        {% if query %}<a class="updated-btn updated-btn--ghost" href="{% if new_only %}/employees/new-employees/{% else %}/employees/{% endif %}">Clear</a>{% endif %}
+    </form>
     {% if can_edit %}
         <div style="margin-top:12px;">
             <a class="updated-btn updated-btn--primary" href="{% url 'employees:employee_create' %}">Add employee</a>

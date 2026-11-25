@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
@@ -66,15 +67,24 @@ def ledger_summary(request):
 @role_required(*VIEW_ROLES, "APPROVER")
 def claim_list(request):
     status = request.GET.get("status", "").strip().upper()
+    query = (request.GET.get("q") or "").strip()
     claims = ExpenseClaim.objects.select_related("claimant", "decided_by").order_by("-created_at")
     if status in dict(ExpenseClaim.STATUS_CHOICES):
         claims = claims.filter(status=status)
+    if query:
+        claims = claims.filter(
+            Q(reference__icontains=query)
+            | Q(description__icontains=query)
+            | Q(claimant__username__icontains=query)
+            | Q(category__icontains=query)
+        )
     return render(
         request,
         "expenses/claim_list.html",
         {
             "claims": claims,
             "status": status,
+            "query": query,
             "statuses": ExpenseClaim.STATUS_CHOICES,
             "can_decide": request.user.is_superuser or request.user.has_role("APPROVER"),
         },
@@ -90,13 +100,16 @@ def decide_claim(request, pk):
     actor = request.user
     try:
         if action == "APPROVE":
-            approve_claim(actor, claim, note=note)
+            decided = approve_claim(actor, claim, note=note)
+            messages.success(request, f"{decided.reference} approved")
         elif action == "REJECT":
-            reject_claim(actor, claim, note=note)
+            decided = reject_claim(actor, claim, note=note)
+            messages.success(request, f"{decided.reference} rejected")
         else:
+            messages.error(request, "Unknown decision action")
             return redirect("expenses:claim_list")
-    except ClaimError:
-        return redirect("expenses:claim_list")
+    except ClaimError as exc:
+        messages.error(request, str(exc))
     return redirect("expenses:claim_list")
 
 
@@ -117,9 +130,10 @@ def alert_list(request):
     if request.method == "POST":
         alert = get_object_or_404(Alert, pk=request.POST.get("alert_id"))
         try:
-            clear_alert(request.user, alert, request.POST.get("reason", ""))
-        except ClaimError:
-            pass
+            cleared = clear_alert(request.user, alert, request.POST.get("reason", ""))
+            messages.success(request, f"Alert on {cleared.claim.reference} cleared")
+        except ClaimError as exc:
+            messages.error(request, str(exc))
         return redirect("expenses:alert_list")
 
     alerts = (
