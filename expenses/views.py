@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from accounts.decorators import role_required
+from accounts.views import _money_summary
 from expenses.models import Account, Alert, ExpenseClaim, LedgerEntry
 from expenses.services import ClaimError, approve_claim, clear_alert, reject_claim
 
@@ -47,6 +48,39 @@ def ledger_summary(request):
         .order_by("code")
     )
 
+    view_options = (
+        ("trial", "Trial balance by account"),
+        ("category", "By category"),
+        ("journal", "Recent postings"),
+        ("reconciliation", "Reconciliation"),
+    )
+    view = request.GET.get("view", "trial")
+    if view not in [code for code, _ in view_options]:
+        view = "trial"
+
+    account_code = (request.GET.get("account") or "").strip()
+    account_choices = list(
+        Account.objects.values_list("code", flat=True).order_by("code")
+    )
+    lines = LedgerEntry.objects.select_related("claim", "account").order_by("-id")
+    if account_code:
+        lines = lines.filter(account__code=account_code)
+
+    posted_claims = LedgerEntry.objects.values("claim_id").distinct().count()
+    checks = (
+        ("Debits vs credits", debits - credits),
+        (
+            "Approved claims vs posted claims",
+            ExpenseClaim.objects.filter(status=ExpenseClaim.APPROVED).count()
+            - posted_claims,
+        ),
+        ("Non-positive postings", LedgerEntry.objects.filter(amount__lte=0).count()),
+    )
+    reconciliation = [
+        {"check": name, "value": value, "result": "OK" if value == 0 else "FAIL"}
+        for name, value in checks
+    ]
+
     return render(
         request,
         "expenses/ledger_summary.html",
@@ -55,10 +89,14 @@ def ledger_summary(request):
             "credits": credits,
             "difference": debits - credits,
             "by_category": by_category,
-            "lines": LedgerEntry.objects.select_related("claim", "account").order_by(
-                "-id"
-            )[:20],
+            "lines": lines[:50],
             "trial": trial,
+            "view_options": view_options,
+            "view": view,
+            "account_choices": account_choices,
+            "account_code": account_code,
+            "reconciliation": reconciliation,
+            "chart": _money_summary()["charts"]["category"],
         },
     )
 

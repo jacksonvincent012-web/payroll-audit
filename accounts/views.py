@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
@@ -11,7 +12,7 @@ from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import role_required
 from accounts.forms import ParticipantForm, SUSForm
-from accounts.models import SUSResponse, UATParticipant
+from accounts.models import AppMessage, SUSResponse, UATParticipant
 from auditlog.models import AuditEntry
 from core.charts import chart_legend, donut_chart
 from core.chain import verify
@@ -149,6 +150,24 @@ def _serialise(e):
         "prev_hash": e.prev_hash,
         "entry_hash": e.entry_hash,
     }
+
+
+@login_required
+def message_list(request):
+    if request.method == "POST":
+        message = get_object_or_404(
+            AppMessage, pk=request.POST.get("message_id"), recipient=request.user
+        )
+        if message.read_at is None:
+            from django.utils import timezone
+
+            message.read_at = timezone.now()
+            message.save(update_fields=["read_at"])
+            messages.success(request, "Message marked as read")
+        return redirect("accounts:message_list")
+
+    inbox = request.user.app_messages.select_related("sender").all()
+    return render(request, "accounts/message_list.html", {"inbox": inbox})
 
 
 @require_http_methods(["GET"])

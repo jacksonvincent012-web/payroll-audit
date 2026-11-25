@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Messages{% endblock %}
+
+{% block content %}
+<section class="updated-surface">
+    <p class="updated-eyebrow">Notifications</p>
+    <h1 class="updated-title">Messages</h1>
+    <p class="updated-lead">{{ inbox|length }} message(s) &middot; {{ unread_messages }} unread</p>
+</section>
+
+<section class="updated-surface">
+    <div class="updated-table-wrap">
+        <table class="updated-table">
+            <thead>
+                <tr><th>When</th><th>Subject</th><th>From</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for message in inbox %}
+                    <tr style="{% if message.is_unread %}font-weight:600;{% endif %}">
+                        <td style="white-space:nowrap;font-weight:400;">{{ message.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {{ message.subject }}<br>
+                            <span style="font-size:0.82rem;font-weight:400;color:var(--updated-muted);">{{ message.body }}</span>
+                        </td>
+                        <td>{{ message.sender.username|default:"System" }}</td>
+                        <td>
+                            {% if message.is_unread %}<span style="color:#f37021;font-weight:600;">Unread</span>
+                            {% else %}<span style="color:#16a34a;">Read</span>{% endif %}
+                        </td>
+                        <td style="text-align:right;">
+                            {% if message.is_unread %}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="message_id" value="{{ message.pk }}">
+                                    <button type="submit" class="updated-btn updated-btn--ghost" style="padding:4px 10px;font-size:0.75rem;">Mark read</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5">No messages yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

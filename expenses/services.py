@@ -4,6 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from auditlog.services import record
+from accounts.notifications import notify
 from expenses.models import Alert, ApprovalRule, ApprovalStep, Account, ExpenseClaim, LedgerEntry
 
 CASH_CODE = "1000"
@@ -201,6 +202,15 @@ def _transition(actor, claim, new_status, action, note=""):
         old=before,
         new=claim.snapshot(),
     )
+    if new_status in (ExpenseClaim.APPROVED, ExpenseClaim.REJECTED):
+        notify(
+            claim.claimant,
+            f"Claim {claim.reference} {new_status.lower()}",
+            f"Your claim {claim.reference} for KES {claim.amount} was "
+            f"{new_status.lower()} by {actor.username}. {note}".strip(),
+            kind="SUCCESS" if new_status == ExpenseClaim.APPROVED else "WARNING",
+            sender=actor,
+        )
     return claim
 
 

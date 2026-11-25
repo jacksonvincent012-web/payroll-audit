@@ -9,6 +9,7 @@ from django.db import transaction
 from django.contrib.auth import get_user_model
 
 from auditlog.services import record
+from accounts.notifications import notify_role
 from core.emailing import is_configured
 from employees.models import (
     AttendanceImport,
@@ -159,6 +160,13 @@ def _raise_employee_alert(actor, employee, kind, severity, note):
             "severity": severity,
             "employee": employee.staff_no,
         },
+    )
+    notify_role(
+        "HR_OFFICER",
+        f"{severity} alert: {employee.staff_no}",
+        note,
+        kind="WARNING",
+        sender=actor,
     )
     return alert
 

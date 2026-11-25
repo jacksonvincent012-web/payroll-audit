@@ -139,10 +139,21 @@ a prompt for human review, not proof of wrongdoing.
 
 ## Interface feedback
 
+The ledger summary has an Excel-style slicer: one dropdown switches between
+Trial balance by account, By category, Recent postings and Reconciliation, and
+the journal view has a second dropdown to filter by account code.
+
 The employee register and claims list include search boxes, and the claims list
 keeps the search term when switching status filters. Approvals, rejections,
 employee saves, imports and alert clearing now show a success or error message
 on the next page instead of redirecting silently.
+
+## Messages
+
+Every user has an in-app message centre at `/messages/` with an unread badge in
+the navigation. Approvals and rejections notify the claimant automatically, and
+verification alerts notify HR officers. Messages can be marked as read; a user
+cannot mark another user's message as read.
 
 ## Operations
 

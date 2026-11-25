@@ -30,84 +30,112 @@
 </section>
 
 <section class="updated-surface">
-    <p class="updated-eyebrow">By category</p>
-    <div class="updated-table-wrap">
-        <table class="updated-table">
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th style="text-align:right;">Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in by_category %}
-                    <tr>
-                        <td>{{ row.label }}</td>
-                        <td style="text-align:right;font-family:monospace;">{{ row.total }}</td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="2">No approved claims yet.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <p class="updated-eyebrow">Approved amount by category</p>
+    <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-top:12px;">
+        <div style="flex:0 0 auto;">{{ chart.svg|safe }}</div>
+        <div style="flex:1;min-width:240px;">
+            <div class="updated-table-wrap">
+                <table class="updated-table">
+                    <thead><tr><th>Item</th><th style="text-align:right;">Amount (KES)</th><th style="text-align:right;">Share</th></tr></thead>
+                    <tbody>
+                        {% for row in chart.legend %}
+                            <tr>
+                                <td><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:{{ row.colour }};margin-right:8px;"></span>{{ row.label }}</td>
+                                <td style="text-align:right;font-family:monospace;">{{ row.value }}</td>
+                                <td style="text-align:right;font-family:monospace;">{{ row.percent }}%</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="3">No approved claims yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </section>
 
 <section class="updated-surface">
-    <p class="updated-eyebrow">Recent postings</p>
-    <div class="updated-table-wrap">
-        <table class="updated-table">
-            <thead>
-                <tr>
-                    <th>Claim</th>
-                    <th>Account</th>
-                    <th>Side</th>
-                    <th style="text-align:right;">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for line in lines %}
-                    <tr>
-                        <td style="font-family:monospace;">{{ line.claim.reference }}</td>
-                        <td>{{ line.account.code }} {{ line.account.name }}</td>
-                        <td>{{ line.side }}</td>
-                        <td style="text-align:right;font-family:monospace;">{{ line.amount }}</td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="4">No postings yet.</td></tr>
+    <p class="updated-eyebrow">Ledger views</p>
+    <form method="get" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <label for="view" style="font-size:0.85rem;color:var(--updated-muted);">View</label>
+        <select class="updated-select" id="view" name="view" onchange="this.form.submit()" style="max-width:260px;">
+            {% for code, label in view_options %}
+                <option value="{{ code }}" {% if code == view %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        {% if view == 'journal' %}
+            <label for="account" style="font-size:0.85rem;color:var(--updated-muted);">Account</label>
+            <select class="updated-select" id="account" name="account" onchange="this.form.submit()" style="max-width:160px;">
+                <option value="">All accounts</option>
+                {% for code in account_choices %}
+                    <option value="{{ code }}" {% if code == account_code %}selected{% endif %}>{{ code }}</option>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</section>
+            </select>
+        {% endif %}
+        <noscript><button type="submit" class="updated-btn updated-btn--ghost">Apply</button></noscript>
+    </form>
 
-<section class="updated-surface">
-    <p class="updated-eyebrow">Trial balance by account</p>
-    <div class="updated-table-wrap">
-        <table class="updated-table">
-            <thead>
-                <tr>
-                    <th>Code</th>
-                    <th>Account</th>
-                    <th>Kind</th>
-                    <th style="text-align:right;">Debit</th>
-                    <th style="text-align:right;">Credit</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in trial %}
-                    <tr>
-                        <td style="font-family:monospace;">{{ row.code }}</td>
-                        <td>{{ row.name }}</td>
-                        <td>{{ row.kind }}</td>
-                        <td style="text-align:right;font-family:monospace;">{{ row.debit|default:"—" }}</td>
-                        <td style="text-align:right;font-family:monospace;">{{ row.credit|default:"—" }}</td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="5">No postings yet.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="updated-table-wrap" style="margin-top:16px;">
+        {% if view == 'trial' %}
+            <table class="updated-table">
+                <thead>
+                    <tr><th>Code</th><th>Account</th><th>Kind</th><th style="text-align:right;">Debit</th><th style="text-align:right;">Credit</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in trial %}
+                        <tr>
+                            <td style="font-family:monospace;">{{ row.code }}</td>
+                            <td>{{ row.name }}</td>
+                            <td>{{ row.kind }}</td>
+                            <td style="text-align:right;font-family:monospace;">{{ row.debit|default:"—" }}</td>
+                            <td style="text-align:right;font-family:monospace;">{{ row.credit|default:"—" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5">No postings yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% elif view == 'category' %}
+            <table class="updated-table">
+                <thead><tr><th>Category</th><th style="text-align:right;">Total</th></tr></thead>
+                <tbody>
+                    {% for row in by_category %}
+                        <tr><td>{{ row.label }}</td><td style="text-align:right;font-family:monospace;">{{ row.total }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="2">No approved claims yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% elif view == 'journal' %}
+            <table class="updated-table">
+                <thead><tr><th>Claim</th><th>Account</th><th>Side</th><th style="text-align:right;">Amount</th></tr></thead>
+                <tbody>
+                    {% for line in lines %}
+                        <tr>
+                            <td style="font-family:monospace;">{{ line.claim.reference }}</td>
+                            <td>{{ line.account.code }} {{ line.account.name }}</td>
+                            <td>{{ line.side }}</td>
+                            <td style="text-align:right;font-family:monospace;">{{ line.amount }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4">No postings yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <table class="updated-table">
+                <thead><tr><th>Check</th><th style="text-align:right;">Value</th><th>Result</th></tr></thead>
+                <tbody>
+                    {% for row in reconciliation %}
+                        <tr>
+                            <td>{{ row.check }}</td>
+                            <td style="text-align:right;font-family:monospace;">{{ row.value }}</td>
+                            <td style="font-weight:600;color:{% if row.result == 'OK' %}#16a34a{% else %}#dc2626{% endif %};">{{ row.result }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

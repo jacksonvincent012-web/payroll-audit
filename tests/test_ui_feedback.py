@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from accounts.models import Role, User, UserRole
 from expenses.models import Account, ExpenseClaim
-from expenses.services import create_claim, submit_claim
+from expenses.services import approve_claim, create_claim, submit_claim
 
 
 def make_user(username, code=None):
@@ -92,3 +92,45 @@ class ClaimFeedbackTests(TestCase):
         response = self.client.get("/finance/claims/?q=CLM-UI")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "CLM-UI")
+
+
+class LedgerViewTests(TestCase):
+    def setUp(self):
+        self.user = make_user("ledger", "ACCOUNTANT")
+        Account.objects.get_or_create(
+            code="1000", defaults={"name": "Cash", "kind": Account.ASSET}
+        )
+        Account.objects.get_or_create(
+            code="5100", defaults={"name": "Tuition", "kind": Account.EXPENSE}
+        )
+        claimant = make_user("claimant")
+        approver = make_user("approver", "APPROVER")
+        claim = create_claim(
+            claimant,
+            reference="CLM-LEDGER",
+            description="Fees",
+            category=ExpenseClaim.TUITION,
+            amount=Decimal("7500.00"),
+        )
+        submit_claim(claimant, claim)
+        approve_claim(approver, claim)
+        self.client.force_login(self.user)
+
+    def test_default_shows_trial_balance(self):
+        response = self.client.get("/finance/")
+        self.assertContains(response, "Trial balance by account")
+        self.assertContains(response, "1000")
+        self.assertContains(response, "<svg")
+        self.assertContains(response, "Approved amount by category")
+
+    def test_view_dropdown_switches_tables(self):
+        response = self.client.get("/finance/?view=category")
+        self.assertContains(response, "School fees")
+        response = self.client.get("/finance/?view=reconciliation")
+        self.assertContains(response, "Debits vs credits")
+        self.assertContains(response, "OK")
+
+    def test_account_filter_narrows_journal(self):
+        response = self.client.get("/finance/?view=journal&account=1000")
+        self.assertContains(response, "CLM-LEDGER")
+        self.assertNotContains(response, "Tuition")

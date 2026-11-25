@@ -84,6 +84,45 @@ class UserRole(models.Model):
         return f"{self.user.username}: {self.role.code}"
 
 
+class AppMessage(models.Model):
+    """An internal notification shown in the user's message centre."""
+
+    INFO = "INFO"
+    SUCCESS = "SUCCESS"
+    WARNING = "WARNING"
+    KIND_CHOICES = (
+        (INFO, "Information"),
+        (SUCCESS, "Success"),
+        (WARNING, "Warning"),
+    )
+
+    recipient = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="app_messages"
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_messages",
+    )
+    subject = models.CharField(max_length=200)
+    body = models.TextField()
+    kind = models.CharField(max_length=10, choices=KIND_CHOICES, default=INFO)
+    created_at = models.DateTimeField(default=timezone.now)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    @property
+    def is_unread(self):
+        return self.read_at is None
+
+    def __str__(self):
+        return f"{self.recipient.username}: {self.subject}"
+
+
 class UATParticipant(models.Model):
     """An anonymised participant in user acceptance testing."""
 

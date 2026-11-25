@@ -19,6 +19,7 @@
         <nav class="updated-nav">
             <a href="/">Dashboard</a>
             <a href="/uat/">UAT</a>
+            <a href="{% url 'accounts:message_list' %}">Messages{% if unread_messages %} <span class="updated-badge">{{ unread_messages }}</span>{% endif %}</a>
 
             <details class="updated-dd">
                 <summary>Employees</summary>
