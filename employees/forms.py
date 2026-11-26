@@ -46,6 +46,10 @@ class EmployeeForm(forms.ModelForm):
     def clean_video(self):
         video = self.cleaned_data.get("video")
         if not video:
+            if self.instance.pk is None:
+                raise forms.ValidationError(
+                    "A verification video is required before an employee record can be created."
+                )
             return video
 
         name = (video.name or "").lower()
