@@ -20,6 +20,15 @@
         <span style="margin-left:auto;font-size:0.75rem;color:var(--updated-muted);">Live capture active</span>
     </div>
 
+    <div id="video-recorder" style="display:grid;gap:10px;margin-bottom:14px;padding:12px;background:#f8fafc;border:1px solid #e3e8ef;border-radius:8px;">
+        <p style="margin:0;font-size:0.8rem;color:var(--updated-muted);">Verification video: record from the camera, or attach a file below.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button type="button" id="record-start" class="updated-btn updated-btn--primary">Start recording</button>
+            <button type="button" id="record-stop" class="updated-btn updated-btn--ghost" disabled>Stop &amp; attach</button>
+        </div>
+        <p id="record-hint" style="margin:0;font-size:0.75rem;color:var(--updated-muted);">Recording uses your camera and microphone. The clip is attached to the employee record.</p>
+    </div>
+
     <form method="post" id="employee-form" style="display:grid;gap:14px;">
         {% csrf_token %}
 
@@ -50,6 +59,10 @@
     var form = document.getElementById("employee-form");
     var timer = null;
     var csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
+    var stream = null;
+    var recorder = null;
+    var chunks = [];
+    var startedAt = null;
 
     function setStatus(state) {
         if (state === "recording") {
@@ -86,6 +99,53 @@
         })
         .catch(function () { setStatus("ready"); });
     }
+
+    function attachBlobToVideo(blob) {
+        var file = new File([blob], "verification-" + Date.now() + ".webm", { type: blob.type || "video/webm" });
+        var input = form.querySelector('input[name="video"]');
+        if (!input) { return false; }
+        var dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        return true;
+    }
+
+    var startBtn = document.getElementById("record-start");
+    var stopBtn = document.getElementById("record-stop");
+
+    startBtn.addEventListener("click", async function () {
+        if (startBtn.disabled) { return; }
+        setStatus("recording");
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            recorder = new MediaRecorder(stream);
+            chunks = [];
+            recorder.ondataavailable = function (e) {
+                if (e.data && e.data.size > 0) { chunks.push(e.data); }
+            };
+            recorder.onstop = function () {
+                var blob = new Blob(chunks, { type: "video/webm" });
+                var ok = attachBlobToVideo(blob);
+                stream.getTracks().forEach(function (t) { t.stop(); });
+                stream = null;
+                startBtn.disabled = false;
+                stopBtn.disabled = false;
+                setStatus(ok ? "saved" : "ready");
+            };
+            startedAt = new Date();
+            recorder.start();
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+        } catch (err) {
+            setStatus("ready");
+            startBtn.disabled = false;
+            stopBtn.disabled = false;
+        }
+    });
+
+    stopBtn.addEventListener("click", function () {
+        if (recorder && recorder.state !== "inactive") { recorder.stop(); }
+    });
 
     form.addEventListener("input", function () {
         setStatus("recording");
