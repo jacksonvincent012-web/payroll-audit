@@ -207,8 +207,29 @@ wrongdoing.
 ## Tests
 
 ```powershell
+.\.venv\Scripts\python.exe -m pytest              # full suite, all cores (~3 min)
+.\.venv\Scripts\python.exe -m pytest tests/test_chain.py
+.\.venv\Scripts\python.exe -m pytest -k email
+.\.venv\Scripts\python.exe -m pytest -n0          # single process, for debugging
+.\.venv\Scripts\python.exe -m pytest --create-db  # rebuild the test database
+```
+
+133 tests cover the audit chain, employee services, the claim state machine,
+ledger balancing, role-based views, email delivery, security hardening and UAT.
+
+`pytest` is configured in `pyproject.toml` to spread the suite across all CPU
+cores (`-n auto`) and to reuse the test database between runs (`--reuse-db`).
+Together these take the suite from about 15 minutes to under 3.
+
+Without `--reuse-db`, a leftover `test_payroll_audit` database makes Django stop
+and ask whether to delete it. In a non-interactive shell that prompt waits
+forever, which looks like a hung test run.
+
+The Django runner still works but runs sequentially:
+
+```powershell
 .\.venv\Scripts\python.exe manage.py test tests --noinput
 ```
 
-53 tests cover the audit chain, employee services, the claim state machine,
-ledger balancing, role-based views and the email flow.
+`--noinput` is required for the same reason: without it a stale test database
+blocks on an interactive prompt.

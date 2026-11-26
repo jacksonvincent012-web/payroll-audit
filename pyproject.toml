@@ -6,3 +6,9 @@ extend-ignore = ["RUF012"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+DJANGO_SETTINGS_MODULE = "config.settings"
+pythonpath = ["."]
+# Reuse the test database between runs unless --create-db is passed.
+# Without this, a stale database can block on an interactive prompt.
+# Run across all CPU cores; override with -n0 for a single-process run.
+addopts = "--reuse-db -n auto"
